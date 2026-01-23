@@ -5,8 +5,9 @@
 *.npz
 *.npy
 *.p
+*.pkl
 *.txt
-
+*.kmeans
 
 #Figures
 *.pdf
