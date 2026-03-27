@@ -194,8 +194,8 @@ class LaguerreSnails:
         '''
         Reconstruct the phase spiral in (sqrt(J_z)sin(theta_z), sqrt(J_z)cos(theta_z)) from our BFE
         '''
-        xgrid = np.arange(-self.rootjzmax,self.rootjzmax,self.rootjzstep)
-        ygrid = np.arange(-self.rootjzmax,self.rootjzmax,self.rootjzstep)
+        xgrid = np.arange(-self.rootjzmax,self.rootjzmax+1e-5,self.rootjzstep)
+        ygrid = np.arange(-self.rootjzmax,self.rootjzmax+1e-5,self.rootjzstep)
         grid_combs = np.array(np.meshgrid(xgrid,ygrid)).T.reshape(-1,2)
         r_grid = np.sqrt(grid_combs[:,0]**2 + grid_combs[:,1]**2) # radius in every grid cell
         phi_grid = np.arctan2(grid_combs[:,1], grid_combs[:,0])   # phi in every grid cell
@@ -411,8 +411,6 @@ class LaguerreSnails:
             peaks_[i] = new_peak
         peaks = 1/m * np.unwrap(m*peaks_) # multiply and divide to correctly use the unwrap function
         
-        spl = IUS(np.sqrt(self.Jz_grid), peaks)
-        dspl = spl.derivative(n=1)
 
         hist, _ = np.histogram(np.sqrt(self.sel.jz), bins=len(self.Jz_grid), 
                                        range=[0,np.max(np.sqrt(self.Jz_grid))])
@@ -461,6 +459,7 @@ class LaguerreSnails:
             
         outer_mean_freq = self.get_mean_freq(self.Jz_grid[outer])
         inner_mean_freq = self.get_mean_freq(self.a) # more accurate than just using "inner"
+        ## NEED TO EDIT BECAUSE a MIGHT NOT BE THE SAME AS INNER WHICH WOULD LEAD TO SLIGHT INACCURACIES IN THIS CALCULATION
         self.time_since_int = np.log(self.Jz_grid[outer]/self.a) / (2*np.tan(self.pitch_angle)*(outer_mean_freq - inner_mean_freq))
             
         return self.pitch_angle, self.phase_angle, self.pitch_phase_flag, self.time_since_int
