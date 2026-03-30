@@ -1,0 +1,178 @@
+# mSSA Run Configurations
+# ========================
+# Each [runs.<name>] section defines one run.
+# Required per run: data_file
+# All other keys fall back to [defaults] if not specified.
+#
+# Usage:
+#   python run.py <name>
+#   python run.py <name> --no-movies
+
+[defaults]
+npc          = 50
+window_frac  = 0.5
+channel_name = "one-armed amplitude"
+jphi_min     = 1000.0
+jbins        = 26
+
+# ----------------------------------------------------------------------
+########################
+## TEST PARTICLE RUNS ##
+########################
+
+[runs.test_fiducial]
+data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_Kiyan_test_t40-300/m1_amp_bins_j25_t16.dat"
+sim_name     = "test"
+channel_name = "one-armed amplitude"
+list_of_pc_lists = [
+]
+
+
+[runs.test_shorter40_200]
+data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_Kiyan_test_t40-200/m1_amp_bins_j25_t16.dat"
+sim_name     = "test"
+channel_name = "one-armed amplitude"
+list_of_pc_lists = [
+]
+
+
+[runs.test_short_window]
+data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_Kiyan_test_t40-300/m1_amp_bins_j25_t16.dat"
+sim_name     = "test"
+channel_name = "one-armed amplitude"
+window_frac  = 0.25
+list_of_pc_lists = [
+]
+
+
+[runs.test_shorter40_200_short_window]
+data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_Kiyan_test_t40-200/m1_amp_bins_j25_t16.dat"
+sim_name     = "test"
+channel_name = "one-armed amplitude"
+window_frac  = 0.25
+list_of_pc_lists = [
+]
+
+
+########################
+## B2 SIMULATION RUNS ##
+########################
+
+[runs.B2_fiducial]
+data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_B2/m1_amp_bins_j30_t16.dat"
+sim_name     = "B2"
+channel_name = "one-armed amplitude"
+window_frac  = 0.5
+jbins=31
+list_of_pc_lists = [
+]
+
+
+[runs.B2_short_window]
+data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_B2/m1_amp_bins_j30_t16.dat"
+sim_name     = "B2"
+channel_name = "one-armed amplitude"
+window_frac  = 0.25
+jbins=31
+list_of_pc_lists = [
+]
+
+
+[runs.B2_first_passage]
+data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_B2/m1_amp_first_passage_bins_j30_t16.dat"
+sim_name     = "B2"
+channel_name = "one-armed amplitude"
+window_frac  = 0.5
+jbins=31
+list_of_pc_lists = [
+]
+
+
+[runs.B2_first_passage_short_window]
+data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_B2/m1_amp_first_passage_bins_j30_t16.dat"
+sim_name     = "B2"
+channel_name = "one-armed amplitude"
+window_frac  = 0.25
+jbins=31
+list_of_pc_lists = [
+]
+
+
+[runs.B2_second_passage]
+data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_B2/m1_amp_second_passage_bins_j30_t16.dat"
+sim_name     = "B2"
+channel_name = "one-armed amplitude"
+window_frac  = 0.5
+jbins=31
+list_of_pc_lists = [
+]
+
+
+[runs.B2_second_passage_short_window]
+data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_B2/m1_amp_second_passage_bins_j30_t16.dat"
+sim_name     = "B2"
+channel_name = "one-armed amplitude"
+window_frac  = 0.25
+jbins=31
+list_of_pc_lists = [
+]
+
+
+[runs.B2_inner]
+data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_B2/m1_amp_inner.dat"
+sim_name     = "B2"
+channel_name = "one-armed amplitude"
+window_frac  = 0.5
+jbins=16
+list_of_pc_lists = [
+]
+
+
+[runs.B2_outer]
+data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_B2/m1_amp_outer.dat"
+sim_name     = "B2"
+channel_name = "one-armed amplitude"
+window_frac  = 0.5
+jbins=16
+list_of_pc_lists = [
+]
+
+
+[runs.B2_first_passage_inner]
+data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_B2/m1_amp_first_passage_inner.dat"
+sim_name     = "B2"
+channel_name = "one-armed amplitude"
+window_frac  = 0.5
+jbins=16
+list_of_pc_lists = [
+]
+
+
+[runs.B2_first_passage_outer]
+data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_B2/m1_amp_first_passage_outer.dat"
+sim_name     = "B2"
+channel_name = "one-armed amplitude"
+window_frac  = 0.5
+jbins=16
+list_of_pc_lists = [
+]
+
+
+[runs.B2_second_passage_inner]
+data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_B2/m1_amp_second_passage_inner.dat"
+sim_name     = "B2"
+channel_name = "one-armed amplitude"
+window_frac  = 0.5
+jbins=16
+list_of_pc_lists = [
+]
+
+
+[runs.B2_second_passagee_outer]
+data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_B2/m1_amp_second_passage_outer.dat"
+sim_name     = "B2"
+channel_name = "one-armed amplitude"
+window_frac  = 0.5
+jbins=16
+list_of_pc_lists = [
+]
