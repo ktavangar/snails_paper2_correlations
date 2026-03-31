@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wc:*)",
+      "Bash(ls:*)",
+      "Bash(open:*)",
+      "Bash(mkdir -p /Users/Tavangar/Work/EXP_Projects/paper2_correlations/mssa_results/test_particle/fiducial_run/figures/face-on_plots)",
+      "Bash(mkdir -p /Users/Tavangar/Work/EXP_Projects/paper2_correlations/mssa_results/B2)"
+    ]
+  }
+}

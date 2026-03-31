@@ -17,3 +17,8 @@ So the current technique is still useful for that analysis, but it may be missin
 
 I think this alternate binning is likely to be more impactful for pitch and phase angle correlations rather than amplitude. 
 It is hard to imagine how large scale features such as the halo would amplify or suppress phase spiral amplitude, especially since the number of stars in each bin would stay constant (by design). At least not in an oscillatory way.
+
+
+### Interpretation of F and G Matrices
+
+In the F and G Matrices, especially in the test particle simulation, there is often a pattern where for principal components ~2-20 you get high contribution to fewer and fewer channels, with higher PCs keeping their contributions to the inner disk while having very little contribution to the outer disk. This is probably because the inner disk eventually phase mixes completely and the signal stops making sense. So it would be interesting to check if the face-on plots that don't include the upper end of these PCs deviate from a dipole in the inner disk specifically.

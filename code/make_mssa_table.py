@@ -7,11 +7,10 @@ import pathlib
 
 from schwimmbad.utils import batch_tasks
 from mpi4py import MPI
-# from mpi4py.futures import MPIPoolExecutor
 from functools import partial
+from argparse import ArgumentParser
+import sys
 
-# import sys
-# sys.path.append('/mnt/ktavangar/home/projects/MSSA_Snails/code/')
 from mssa_prep import MSSATable
 
 def worker(batch, TableSetup):
@@ -56,9 +55,6 @@ def main(pool):
 
 
 if __name__ == '__main__':
-    from argparse import ArgumentParser
-    import sys
-
     # Define parser object
     parser = ArgumentParser()
 
@@ -72,21 +68,19 @@ if __name__ == '__main__':
     
     print(args.mpi, args.n_procs, flush=True)
     # deal with multiproc:
+    
+    # --- Step 2: fill tables ---
     if args.mpi:
         from schwimmbad.mpi import MPIPool
-        Pool=MPIPool
-        #Pool = MPIPoolExecutor
-        kw = dict()
+        Pool, kw = MPIPool, {}
     elif args.n_procs > 1:
         from schwimmbad import MultiPool
-        Pool = MultiPool
-        kw = dict(processes=args.n_procs)
+        Pool, kw = MultiPool, {'processes': args.n_procs}
     else:
         from schwimmbad import SerialPool
-        Pool = SerialPool
-        kw = dict()
+        Pool, kw = SerialPool, {}
 
     with Pool(**kw) as pool:
-        print("Running with MPI on {} cores".format(pool.size), flush=True)
-        main(pool=pool)
+        print(f'Running with {pool.size} workers', flush=True)
+        main(pool, args)
     sys.exit(0)

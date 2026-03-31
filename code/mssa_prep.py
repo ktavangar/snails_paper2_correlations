@@ -31,12 +31,14 @@ General Idea:
 
 class MSSATable:
     
-    def __init__(self, jphi_bounds=[1000,3000], nphi_bins=[20, 16], m_max=3, n_max=20):
+    def __init__(self, jphi_bounds=[1000,3000], nphi_bins=[20, 16], 
+                 m_max=3, n_max=20):
         
         # GETTING ALL REGION CENTERS
         jphi_c = np.linspace(jphi_bounds[0], jphi_bounds[1], nphi_bins[0]+1)
         tphi_c_ = np.linspace(0, 2*np.pi, nphi_bins[1]+1)
-        self.rad = [0.5*(jphi_c[1] - jphi_c[0]), 0.5*(tphi_c_[1] - tphi_c_[0])]
+        self.rad = [0.5*(jphi_c[1] - jphi_c[0]), 
+                    0.5*(tphi_c_[1] - tphi_c_[0])]
         tphi_c = tphi_c_[:-1] + self.rad[1]
         self.centers = np.array(np.meshgrid(jphi_c, tphi_c)).T.reshape(-1,2)
 

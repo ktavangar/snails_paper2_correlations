@@ -74,11 +74,11 @@ jphi_min         = get('jphi_min', 1000.0)
 jbins            = get('jbins', 26)
 list_of_pc_lists = [expand_pc_entry(e) for e in get('list_of_pc_lists', [])]
 
-FACE_ON_DIR = os.path.join(FIG_DIR, 'face-on_plots')
+MOVIES_DIR = os.path.join(FIG_DIR, 'movies')
 
 os.makedirs(FIG_DIR, exist_ok=True)
 if not args.no_movies:
-    os.makedirs(FACE_ON_DIR, exist_ok=True)
+    os.makedirs(MOVIES_DIR, exist_ok=True)
 
 print(f"Run: {args.run_name}")
 
@@ -113,15 +113,14 @@ helper.plot_fg_matrices(mssa, FIG_DIR)
 helper.plot_wcorr(mssa, FIG_DIR)
 helper.plot_pc_time_series(mssa, times, FIG_DIR)
 
-# --- Face-on animations ---
+# --- Movies ---
 if not args.no_movies:
     if not list_of_pc_lists:
-        print('Warning: list_of_pc_lists is empty in runs.toml — skipping movies.')
-    else:
-        print('Creating face-on animations...')
-        helper.make_face_on_movies(
-            mssa, data_file, times, FACE_ON_DIR, list_of_pc_lists,
-            sim_name=sim_name, channel_name=channel_name,
-            jphi_min=jphi_min, jbins=jbins)
+        print('Warning: list_of_pc_lists is empty in runs.toml — data movies only.')
+    print('Creating dual-panel movies...')
+    helper.make_dual_movies(
+        mssa, data_file, times, MOVIES_DIR, list_of_pc_lists,
+        sim_name=sim_name, channel_name=channel_name,
+        jphi_min=jphi_min, jbins=jbins)
 
 print('Done. All outputs saved to:', FIG_DIR)
