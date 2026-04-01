@@ -36,9 +36,8 @@ from astropy.table import Table
 # Allow imports from the parent code/ directory
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from load_data_B2 import load_step_actions
-from load_data import load_data_actions
-from df_helpers import LaguerreSnails, select_action_region
+from load_actions import *
+from df_helpers import LaguerreSnails
 
 
 class LaguerreSnailsByIndex(LaguerreSnails):
@@ -95,7 +94,7 @@ class LagrangianMSSATable:
     reference timestep via assign_bins() and reused at all other timesteps.
     """
 
-    def __init__(self, jphi_bounds=[1000, 3000], nphi_bins=[20, 16],
+    def __init__(self, jphi_bounds=[1000, 4000], nphi_bins=[30, 16],
                  m_max=3, n_max=20):
 
         jphi_c  = np.linspace(jphi_bounds[0], jphi_bounds[1], nphi_bins[0] + 1)
@@ -121,6 +120,10 @@ class LagrangianMSSATable:
         self.jz_grid = (np.arange(0, 10, 0.1)) ** 2
         self.tz_grid = np.arange(0, 2 * np.pi, np.pi / 48)
 
+        self.jphi_bins = np.linspace(jphi_bounds[0]-self.rad[0], 
+                                jphi_bounds[1]+self.rad[0], 
+                                nphi_bins[0] + 2)
+        self.thetaphi_bins = np.linspace(0, 2*np.pi, nphi_bins[1] + 1)
         self.bin_indices = None  # set by assign_bins() or load_bin_indices()
 
     # ------------------------------------------------------------------
@@ -138,9 +141,21 @@ class LagrangianMSSATable:
                    integer index matching all other timestep DataFrames)
         """
         self.bin_indices = []
-        for center in self.centers:
-            sel = select_action_region(data_ref, center, self.rad)
-            self.bin_indices.append(sel.index.values)
+
+        jphi_idx = np.digitize(data_ref['jphi'].values, self.jphi_bins) - 1
+        thetaphi_idx = np.digitize(data_ref['theta_phi'].values, self.thetaphi_bins) - 1
+
+        data_ref['jphi_bin'] = jphi_idx
+        data_ref['thetaphi_bin'] = thetaphi_idx
+
+        bin_idx = {
+            key: list(grp.index) for key, grp in data_ref.groupby(['jphi_bin', 'thetaphi_bin'])
+        }
+
+        for key, val in bin_idx.items():
+            if (key[0] != -1) & (key[0] != len(self.jphi_bins)-1):
+                self.bin_indices.append(np.array(val))
+
         print(f'Assigned {len(self.bin_indices)} bins '
               f'({sum(len(b) for b in self.bin_indices)} total particle-bin assignments).')
 
@@ -166,7 +181,7 @@ class LagrangianMSSATable:
         empty = np.zeros((len(self.centers), len(self.colnames)))
         return Table(empty, names=self.colnames)
 
-    def fill_table(self, timestep, sim, action_file=None):
+    def fill_table(self, timestep, sim, actions_dir=None):
         """
         Compute BFE statistics for all bins at this timestep using the
         Lagrangian particle assignments from the reference timestep.
@@ -175,7 +190,7 @@ class LagrangianMSSATable:
         ----------
         timestep    : int
         sim         : 'test' or 'live' or 'B2'
-        action_file : path to actions pickle
+        actions_dir : path to directory containing actions files
 
         Returns
         -------
@@ -190,11 +205,11 @@ class LagrangianMSSATable:
 
         # Load data for this timestep
         if (sim == 'live') | (sim =='B2'):
-            data = load_step_actions(self.timestep)
+            data = load_B2_actions(tstep=self.timestep, actions_dir=actions_dir)
         elif sim == 'test':
-            data = load_data_actions(action_file=action_file)
+            data = load_test_actions(tstep=self.timestep, actions_dir=actions_dir)
         else:
-            raise ValueError(f"Unknown sim '{sim}'. Expected 'test' or 'live'.")
+            raise ValueError(f"Unknown sim '{sim}'. Expected 'test', 'live', or 'B2'.")
 
         print(f'Getting coefficients for timestep {self.timestep}...')
 

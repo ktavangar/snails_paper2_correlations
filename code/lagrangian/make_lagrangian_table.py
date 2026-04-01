@@ -44,7 +44,7 @@ from lagrangian_prep import LagrangianMSSATable
 # MPI worker
 # ---------------------------------------------------------------------------
 
-def worker(batch, TableSetup, sim, data_root, bin_index_file):
+def worker(batch, TableSetup, sim, bin_index_file):
     """Process one batch of timesteps on a single MPI rank."""
     (batch_id, _), tasks, cache_path = batch
     cache_file = cache_path / f'lagrangian_table_{batch_id:04d}.fits'
@@ -57,12 +57,24 @@ def worker(batch, TableSetup, sim, data_root, bin_index_file):
     rank = MPI.COMM_WORLD.Get_rank()
     t = TableSetup.create_empty_table()
 
+    # where do the action files live?
+    if (sim == 'live') | (sim == 'B2'):
+        data_root = '/mnt/ceph/users/jhunt/Bonsai/r2/B2/FlattenedDiscActions/'
+    elif sim == 'test':
+        data_root = '../Kiyan-Single-Passage/full/'
+    
+
     for timestep in tasks:
+        if (sim == 'live') | (sim == 'B2'):
+            action_file = data_root + f'MedianFlattenedDiskActions{int(timestep)}.npy'
+        elif sim == 'test':
+            action_file = data_root + f'Actions{int(timestep)}.p'
+    
         print(f'Processing timestep {timestep} on rank {rank}', flush=True)
         new_t = TableSetup.fill_table(
             timestep,
             sim=sim,
-            action_file=str(pathlib.Path(data_root) / f'Actions{int(timestep)}.p'),
+            action_file=action_file
         )
         t = vstack([t, new_t])
 
@@ -91,7 +103,6 @@ def main(pool, args):
         partial(worker,
                 TableSetup=TableSetup,
                 sim=args.sim,
-                data_root=args.data_root,
                 bin_index_file=args.bin_index_file),
         batched_tasks,
     ):
@@ -120,9 +131,7 @@ if __name__ == '__main__':
                         help='Path to save/load bin index assignments (.npy).')
 
     # Step 2: table filling
-    parser.add_argument('--sim',        default='test', choices=['test', 'live'])
-    parser.add_argument('--data-root',  default=None,
-                        help='Directory containing per-timestep FITS and action files.')
+    parser.add_argument('--sim',        default='test', choices=['test', 'live', 'B2'])
     parser.add_argument('--cache-dir',  default='data/tables_lagrangian',
                         help='Output directory for per-batch FITS tables.')
     parser.add_argument('--t-start',    type=int, default=40)

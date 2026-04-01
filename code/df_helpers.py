@@ -107,8 +107,8 @@ class LaguerreSnails:
         '''
         Generate the coefficients for the BFE
         '''
-        self.coeffs = np.zeros((self.m_max,self.n_max), dtype=np.complex_)      #coefficient array
-        self.coeffs_std = np.zeros((self.m_max, self.n_max), dtype=np.complex_) #coefficient error array
+        self.coeffs = np.zeros((self.m_max,self.n_max), dtype=np.complex128)      #coefficient array
+        self.coeffs_std = np.zeros((self.m_max, self.n_max), dtype=np.complex128) #coefficient error array
         
         #calculate coefficients
         #print('Calculating coefficients...')
@@ -134,8 +134,12 @@ class LaguerreSnails:
             for m in self.ms:
                 ns_ = np.arange(n_maxs[m]) # array of Laguerre modes included in BFE
                 # Add the contribution to this action, angle location from each BFE coefficient
-                df_ += np.sum(self.n_m(m) * self.disk_lag(n,act,self.a) * np.exp(-1j*m*ang) * self.coeffs[m,n] \
-                         for n in ns_)
+                contributions = [
+                    self.n_m(m) * self.disk_lag(n, act, self.a) * np.exp(-1j * m * ang) * self.coeffs[m, n]
+                    for n in ns_
+                ]
+                # Sum the contributions
+                df_ += np.sum(contributions,axis=0)
             
 #             df_ = np.sum(self.n_m(m) * self.disk_lag(n,act,self.a) * np.exp(-1j*m*ang) * self.coeffs[m,n] \
 #                          for m,n in product(self.ms,self.ns))
@@ -204,11 +208,15 @@ class LaguerreSnails:
         recon_df_ = 0
         for m in self.ms:
             ns_ = np.arange(n_maxs[m])
-            recon_df_ += np.sum(self.n_m(m) * self.disk_lag(n,r_grid**2,self.a) * np.exp(-1j*m*phi_grid) * self.coeffs[m,n] \
-                             for n in ns_).real
+            contributions = [
+                self.n_m(m) * self.disk_lag(n,r_grid**2,self.a) * np.exp(-1j*m*phi_grid) * self.coeffs[m,n]
+                for n in ns_
+            ]
+            recon_df_ += np.sum(contributions, axis=0).real
         
-        recon_df_m0_ = recon_df_ - np.sum(self.n_m(0) * self.disk_lag(n,r_grid**2,self.a) * self.coeffs[0,n] \
-                                          for n in np.arange(n_maxs[0])).real
+        contributions2 = [self.n_m(0) * self.disk_lag(n,r_grid**2,self.a) * self.coeffs[0,n]
+                          for n in np.arange(n_maxs[0]) ]
+        recon_df_m0_ = recon_df_ - np.sum(contributions2, axis=0).real
         
         self.recon_df = np.reshape(recon_df_, (len(xgrid), len(ygrid)))
         self.recon_df_m0 = np.reshape(recon_df_m0_, (len(xgrid), len(ygrid)))
@@ -397,10 +405,10 @@ class LaguerreSnails:
         
         ns_ = np.arange(self.n_maxs[m])
         ang=self.thetaz_grid
-
         
         def find_peak(thetaz, Jz, m):
-            C = np.sum(self.coeffs[m,n] * self.disk_lag(n,Jz,self.a) for n in ns_)
+            contrib = [self.coeffs[m,n] * self.disk_lag(n,Jz,self.a) for n in ns_]
+            C = np.sum(contrib,axis=0)
             real = (C*np.exp(-1j*m*thetaz)).real
             return -real # so that I can use scipy.optimize.fmin
 
@@ -408,10 +416,12 @@ class LaguerreSnails:
         for i in range(len(self.Jz_grid)):
             act = self.Jz_grid[i]
             new_peak = scipy.optimize.fmin(find_peak, x0=np.pi, args=(act, m), disp=False)
-            peaks_[i] = new_peak
+            peaks_[i] = new_peak[0]
         peaks = 1/m * np.unwrap(m*peaks_) # multiply and divide to correctly use the unwrap function
         
-
+        spl = IUS(np.sqrt(self.Jz_grid), peaks)
+        dspl = spl.derivative(n=1)
+        
         hist, _ = np.histogram(np.sqrt(self.sel.jz), bins=len(self.Jz_grid), 
                                        range=[0,np.max(np.sqrt(self.Jz_grid))])
         inner = np.argmin(np.abs(self.Jz_grid - self.a))
@@ -436,17 +446,12 @@ class LaguerreSnails:
             self.pitch_phase_flag = 0
         else: #if the calculations are not well defined, do them anyway but flag the region    
             self.pitch_phase_flag = 1
-        
-        # def get_phase(cut_jz, phase_angle):
-        #         ind_for_fit = dspl(cut_jz)<0
-        #         pitch_angle = np.median(dspl(cut_jz)[ind_for_fit])
-        #         return pitch_angle*cut_jz + phase_angle
             
         def get_values(cut_jz, pitch_angle, phase_angle):
             return 1/np.tan(pitch_angle) * np.log(cut_jz) + phase_angle
         
         try:
-            self.pitch_angle, phase = curve_fit(get_values, cut_jz[ind_for_fit], cut_peaks[ind_for_fit], 
+            (self.pitch_angle, phase), _ = curve_fit(get_values, cut_jz[ind_for_fit], cut_peaks[ind_for_fit], 
                                                 p0=[-0.1, 20], bounds=[[-np.pi/2, -100], [0, 1000]], 
                                                 loss='cauchy')[0]
             self.phase_angle = phase % (2*np.pi)
@@ -459,9 +464,7 @@ class LaguerreSnails:
             
         outer_mean_freq = self.get_mean_freq(self.Jz_grid[outer])
         inner_mean_freq = self.get_mean_freq(self.a) # more accurate than just using "inner"
-        ## NEED TO EDIT BECAUSE a MIGHT NOT BE THE SAME AS INNER WHICH WOULD LEAD TO SLIGHT INACCURACIES IN THIS CALCULATION
-        self.time_since_int = np.log(self.Jz_grid[outer]/self.a) / (2*np.tan(self.pitch_angle)*(outer_mean_freq - inner_mean_freq))
-            
+        self.time_since_int = np.log(self.Jz_grid[outer]/self.a) / (2*np.tan(self.pitch_angle)*(outer_mean_freq - inner_mean_freq))[0]
         return self.pitch_angle, self.phase_angle, self.pitch_phase_flag, self.time_since_int
 
     def get_mean_freq(self, jz):
@@ -470,7 +473,7 @@ class LaguerreSnails:
         mean_freqs = np.zeros(len(jz))
         for i in range(len(jz)):
             mean_freqs[i] = np.median(self.sel.freq_z[(self.sel.jz < jz[i]+0.0325)&(self.sel.jz > jz[i]-0.0325)])
-            print(jz[i], len(self.sel.freq_z[(self.sel.jz < jz[i]+0.0325)&(self.sel.jz > jz[i]-0.0325)]))
+            # print(jz[i], len(self.sel.freq_z[(self.sel.jz < jz[i]+0.0325)&(self.sel.jz > jz[i]-0.0325)]))
         return mean_freqs
     
     def get_mean_vels(self):
