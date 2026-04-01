@@ -1,5 +1,7 @@
 ## Notes of Phase Spiral Correlations Project with M-SSA
 
+Quick note: I need a new script file with the relevant loading data functions that isn't clogged with a bunch of useless stuff. Have a file called ``load_action_data.py'' that includes load_actions for the test particle sim and load_step_actions for the B2 sim. Make sure that these are stored as dataframes so that we can reference the index numbers. Note that at least in the test particle case, these won't be actual indices like in a normal pandas DF but rather just the numpy array index but since all particles get stored in the same order at each timestep and the total number of particles remains the same, this doesn't matter.
+
 ### Ideal M-SSA channels and binning to recover signals
 
 I have often thought about how this problem is not ideal for M-SSA, even though it does reasonably well.

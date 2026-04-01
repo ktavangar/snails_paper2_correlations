@@ -62,7 +62,6 @@ def worker(batch, TableSetup, sim, data_root, bin_index_file):
         new_t = TableSetup.fill_table(
             timestep,
             sim=sim,
-            data_file=str(pathlib.Path(data_root) / f'Kiyan_{int(timestep)}.fits'),
             action_file=str(pathlib.Path(data_root) / f'Actions{int(timestep)}.p'),
         )
         t = vstack([t, new_t])

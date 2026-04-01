@@ -36,7 +36,7 @@ from astropy.table import Table
 # Allow imports from the parent code/ directory
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from load_data_B2 import setup_B2
+from load_data_B2 import load_step_actions
 from load_data import load_data_actions
 from df_helpers import LaguerreSnails, select_action_region
 
@@ -166,7 +166,7 @@ class LagrangianMSSATable:
         empty = np.zeros((len(self.centers), len(self.colnames)))
         return Table(empty, names=self.colnames)
 
-    def fill_table(self, timestep, sim, data_file=None, action_file=None):
+    def fill_table(self, timestep, sim, action_file=None):
         """
         Compute BFE statistics for all bins at this timestep using the
         Lagrangian particle assignments from the reference timestep.
@@ -174,9 +174,8 @@ class LagrangianMSSATable:
         Parameters
         ----------
         timestep    : int
-        sim         : 'test' or 'live'
-        data_file   : path to FITS file (sim='test' only)
-        action_file : path to actions pickle (sim='test' only)
+        sim         : 'test' or 'live' or 'B2'
+        action_file : path to actions pickle
 
         Returns
         -------
@@ -190,11 +189,10 @@ class LagrangianMSSATable:
         self.timestep = int(timestep)
 
         # Load data for this timestep
-        if sim == 'live':
-            data = setup_B2(self.timestep)
+        if (sim == 'live') | (sim =='B2'):
+            data = load_step_actions(self.timestep)
         elif sim == 'test':
-            data = load_data_actions(data_file=data_file,
-                                     action_file=action_file)
+            data = load_data_actions(action_file=action_file)
         else:
             raise ValueError(f"Unknown sim '{sim}'. Expected 'test' or 'live'.")
 
