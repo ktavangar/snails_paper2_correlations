@@ -514,7 +514,7 @@ def make_face_on_movies(mssa, data_file, times, face_on_dir, list_of_pc_lists,
         print(f'  Creating movie for PCs {pc_list}')
         MakeAnim.reconstruct_from_pcs(pcs=pc_list)
 
-        vmin_pc, vmax_pc, _, linthresh_ms = compute_pc_limits(
+        vmin_pc, vmax_pc, linthresh_ms = compute_pc_limits(
             MakeAnim.pc_rc, MakeAnim.T.shape,
             fallback_vmin=data_vmin, fallback_vmax=data_vmax)
         print(f'    LogNorm: [{vmin_pc:.2f}, {vmax_pc:.2f}]  '

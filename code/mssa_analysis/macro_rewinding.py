@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib as mpl
+mpl.rcParams['axes.linewidth'] = 2 #set the value globally
 import matplotlib.pyplot as plt
 import cmasher as cmr
 import scipy
@@ -18,12 +19,13 @@ class RewindMacroSpiral():
         self.J, self.T = np.meshgrid(jphi_c, self.tphi_c)
 
         self.sim_name = sim_name
+        DATA_DIR = '/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/'
         if (sim_name == 'B2') | (sim_name == 'live'):
             self.tstep_diff = 0.009778
-            freqs = np.load('fill in with correct file') # TODO: add correct frequency array for B2 and live runs
+            freqs = np.load(DATA_DIR + 'live_frequency_array_j30.npy')
         elif sim_name == 'test':
             self.tstep_diff = 0.01
-            freqs = np.load('test_frequency_array_j25.npy') # TODO: check filepath
+            freqs = np.load(DATA_DIR + 'test_frequency_array_j25.npy')
         self.omega_phi = freqs*2*np.pi
         self.channel_name = channel_name
 
@@ -69,7 +71,7 @@ class RewindMacroSpiral():
         t_perturb = (theta2 - theta1) / (omega2 - omega1)
         return t_perturb
 
-    def plot_fitting_step(self, tstep, threshold=np.pi, ax=None, savefig=False, fig_dir=None): 
+    def plot_fitting_tstep(self, tstep, threshold=np.pi, ax=None, savefig=False, fig_dir=None): 
         self.fit_macro_spiral(tstep, threshold=threshold)
         
         j_fit = np.linspace(self.jphi_c_fit[0], self.jphi_c_fit[-1], 100)
@@ -92,7 +94,7 @@ class RewindMacroSpiral():
         ax.legend()
         if savefig:
             plt.savefig(fig_dir + f'macro_fit_t{int(tstep)}_{self.pc_string}.pdf')
-        plt.show()
+        plt.close()
 
     def plot_macro_tfit_over_time(self, threshold=np.pi, ax=None, savefig=False, fig_dir=None):
         ntimes = self.pc_rc.shape[-1]
@@ -116,14 +118,18 @@ class RewindMacroSpiral():
         ax.set_ylim(0,ntimes*self.tstep_diff)
         ax.legend()
         if savefig:
-            plt.savefig(fig_dir + f'winding_times_{self.pc_string}.pdf')
-        plt.show()
+            plt.savefig(fig_dir + f'/winding_times_{self.pc_string}.pdf')
+        plt.close()
+        print(f'Saved winding time fit figure for {self.pc_string}')
 
     def make_rewind_dipole_fig(self, tstep, axs=None, savefig=False, fig_dir=None):
 
         rewind_time = self.derive_perturbation_time(tstep, threshold=np.pi/2)
         dipole_tstep = np.max([int(tstep - rewind_time*100), 0])
-        rad_mean_amp_dipole = np.mean(np.reshape(self.pc_rc[:,dipole_tstep], self.T.shape, 'F'), axis=0)
+        try:
+            rad_mean_amp_dipole = np.mean(np.reshape(self.pc_rc[:,dipole_tstep], self.T.shape, 'F'), axis=0)
+        except:
+            rad_mean_amp_dipole = np.mean(np.reshape(self.pc_rc[:,-1], self.T.shape, 'F'), axis=0)
         rad_mean_amp_future = np.mean(np.reshape(self.pc_rc[:,tstep], self.T.shape, 'F'), axis=0)
 
         _, vmax, linthresh = diagnostics.compute_pc_limits(self.pc_rc, self.T.shape)
@@ -167,7 +173,7 @@ class RewindMacroSpiral():
                                 labelbottom = False, bottom = False)      
             ax.grid(visible=False)
         
-        fig.suptitle(f'Rewinding from t={tstep*self.tstep_diff:.2f} Gyr, {self.pc_string}', fontsize=16)
+        fig.suptitle(f'Rewinding from t={tstep*self.tstep_diff:.2f} Gyr to t={dipole_tstep*self.tstep_diff:.2f} Gyr, {self.pc_string}', fontsize=16)
         
         fig.tight_layout()
         
@@ -178,7 +184,7 @@ class RewindMacroSpiral():
         cbar.set_label('One Armed Phase Spiral Amplitude')
         if savefig:
             plt.savefig(fig_dir + f'rewind_t{int(tstep)}_{self.pc_string}.pdf')
-        plt.show()
+        plt.close()
 
 
 def find_fitting_interval(arr, threshold=np.pi/2):
