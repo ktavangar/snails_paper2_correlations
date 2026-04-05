@@ -17,19 +17,18 @@ class MakeAnimations:
         self.times = times
         self.sim_name = sim_name
         self.channel_name = channel_name
-
         
         jphi_c = np.linspace(jphi_min, jphi_min+((jbins-1)*100), jbins)
         self.jphi_c = jphi_c
         tphi_c_ = np.linspace(0, 2*np.pi, 16+1)
         rad = [0.5*(jphi_c[1] - jphi_c[0]), 0.5*(tphi_c_[1] - tphi_c_[0])]
-        tphi_c = tphi_c_[:-1] + rad[1]
-        self.J, self.T = np.meshgrid(jphi_c, tphi_c)
+        self.tphi_c = tphi_c_[:-1] + rad[1]
+        self.J, self.T = np.meshgrid(jphi_c, self.tphi_c)
 
         if sim_name == 'B2':
-            self.time_ratio = 0.009778
+            self.tstep_diff = 0.009778
         elif sim_name == 'test':
-            self.time_ratio = 0.01
+            self.tstep_diff = 0.01
 
     def make_data_mov(self, filename, data_tbl, norm_function=mpl.colors.Normalize, cmap='Reds', **kwargs):
 
@@ -79,7 +78,7 @@ class MakeAnimations:
         ax.grid(visible=False)
         ax.set_rlabel_position(50)
 
-        ax.text(3*np.pi/2, 100, r'{} Gyr'.format(np.around((first_timestep+timestep)*self.time_ratio, 2)), 
+        ax.text(3*np.pi/2, 100, r'{} Gyr'.format(np.around((first_timestep+timestep)*self.tstep_diff, 2)), 
                  fontsize=20, ha="center", c='k')
 
         plt.draw()
@@ -166,7 +165,7 @@ class MakeAnimations:
         ax.set_rmax(np.max(self.jphi_c))
         ax.tick_params(left = False, right = False , labelleft = True ,
                              labelbottom = False, bottom = False)
-        ax.text(3*np.pi/2, 100, r'{} Gyr'.format(np.around((first_timestep+timestep)*self.time_ratio, 2)), fontsize=20, 
+        ax.text(3*np.pi/2, 100, r'{} Gyr'.format(np.around((first_timestep+timestep)*self.tstep_diff, 2)), fontsize=20, 
             ha="center", c='k')
         ax.grid(False)
         ax.set_rlabel_position(50)
@@ -230,7 +229,7 @@ class MakeAnimations:
         ax_pol.pcolormesh(self.T, self.J, dat, cmap=cmap, norm=norm)
         ax_cart.pcolormesh(self.J, self.T, dat, cmap=cmap, norm=norm)
 
-        t_gyr = np.around((self.times[0] + timestep) * self.time_ratio, 2)
+        t_gyr = np.around((self.times[0] + timestep) * self.tstep_diff, 2)
         ax_pol.set_rmax(np.max(self.jphi_c))
         ax_pol.set_yticks([np.min(self.jphi_c), np.max(self.jphi_c)],
                           labels=[r'$J_\phi=1000$', r'$J_\phi=4000$'], fontsize=13, color='k')
@@ -316,7 +315,7 @@ class MakeAnimations:
         ax_cart.set_yticks([0, np.pi/2, np.pi, 3*np.pi/2, 2*np.pi],
                            labels=[r'$0$', r'$\pi/2$', r'$\pi$', r'$3\pi/2$', r'$2\pi$'], fontsize=12)
 
-        t_gyr = np.around((self.times[0] + timestep) * self.time_ratio, 2)
+        t_gyr = np.around((self.times[0] + timestep) * self.tstep_diff, 2)
         suffix = ' (mean-subtracted)' if subtract_mean else ''
         ax_cart.set_title(r't = {} Gyr  —  {}{}'.format(t_gyr, self.pc_string, suffix), fontsize=13)
         plt.draw()

@@ -28,7 +28,8 @@ PROJECT_ROOT = SCRIPT_DIR.parent
 CONFIG_FILE = SCRIPT_DIR / 'runs.toml'
 
 sys.path.append(str(PROJECT_ROOT / 'code'))
-import helper
+import diagnostics
+import macro_rewinding
 
 # --- Argument parsing ---
 parser = argparse.ArgumentParser(description='Run mSSA pipeline for a named run in runs.toml.')
@@ -108,17 +109,34 @@ coefs.zerodata()
 mssa.reconstruct([*range(npc)])
 
 # --- Diagnostic plots ---
-helper.plot_eigenvalues(ev, FIG_DIR)
-helper.plot_fg_matrices(mssa, FIG_DIR)
-helper.plot_wcorr(mssa, FIG_DIR)
-helper.plot_pc_time_series(mssa, times, FIG_DIR)
+diagnostics.plot_eigenvalues(ev, FIG_DIR)
+diagnostics.plot_fg_matrices(mssa, FIG_DIR)
+diagnostics.plot_wcorr(mssa, FIG_DIR)
+diagnostics.plot_pc_time_series(mssa, times, FIG_DIR)
+
+for pc_list in list_of_pc_lists:
+    mssa.reconstruct(pc_list)
+    get_recon = mssa.getReconstructed()
+    pc_rc = get_recon[list(get_recon.keys())[0]].getAllCoefs()
+    MS = macro_rewinding.RewindMacroSpiral(pc_rc, pc_list, jphi_min, jbins, sim_name, channel_name, m=1)
+    MS.plot_macro_tfit_over_time(threshold=np.pi/2, savefig=True, fig_dir=FIG_DIR)
+
+    winding_time_fits_dir = FIG_DIR / f'individual_winding_time_fits/'
+    os.makedirs(winding_time_fits_dir, exist_ok=True)
+
+    rewind_dipole_dir = FIG_DIR / f'rewind_dipoles/'
+    os.makedirs(rewind_dipole_dir, exist_ok=True)
+    
+    for tstep in range(len(times)):
+        MS.plot_fitting_tstep(threshold=np.pi/2, savefig=True, fig_dir=winding_time_fits_dir)
+        MS.make_rewind_dipole_fig(tstep, savefig=True, fig_dir=rewind_dipole_dir)
 
 # --- Movies ---
 if not args.no_movies:
     if not list_of_pc_lists:
         print('Warning: list_of_pc_lists is empty in runs.toml — data movies only.')
     print('Creating dual-panel movies...')
-    helper.make_dual_movies(
+    diagnostics.make_dual_movies(
         mssa, data_file, times, MOVIES_DIR, list_of_pc_lists,
         sim_name=sim_name, channel_name=channel_name,
         jphi_min=jphi_min, jbins=jbins)
