@@ -148,7 +148,6 @@ if __name__ == '__main__':
     if args.assign_bins:
         if args.data_file is None or args.action_file is None:
             parser.error('--assign-bins requires --data-file and --action-file.')
-        from load_data import load_data_actions
         print(f'Loading reference data (timestep {args.ref_timestep})...')
         data_ref = load_data_actions(data_file=args.data_file,
                                      action_file=args.action_file)

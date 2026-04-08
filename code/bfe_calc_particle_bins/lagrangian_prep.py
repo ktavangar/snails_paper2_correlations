@@ -94,7 +94,7 @@ class LagrangianMSSATable:
     reference timestep via assign_bins() and reused at all other timesteps.
     """
 
-    def __init__(self, jphi_bounds=[1000, 4000], nphi_bins=[30, 16],
+    def __init__(self, jphi_bounds=[1000, 3500], nphi_bins=[25, 16],
                  m_max=3, n_max=20):
 
         jphi_c  = np.linspace(jphi_bounds[0], jphi_bounds[1], nphi_bins[0] + 1)

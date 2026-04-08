@@ -152,80 +152,80 @@ list_of_pc_lists = [
 ]
 
 
-[runs.B2_inner]
-data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_B2/m1_amp_inner.dat"
-sim_name     = "B2"
-channel_name = "one-armed amplitude"
-window_frac  = 0.5
-jbins=16
-list_of_pc_lists = [
-    [0,1],[2],[0,1,2],[3,4],[5],[2,5],[6,7],[8,9,10,11],"6:12",
-    "3:12","3:8","3:31","0:8","0:12","0:31",
-    "8:31","31:42","42:50"
-]
+#[runs.B2_inner]
+#data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_B2/m1_amp_inner.dat"
+#sim_name     = "B2"
+#channel_name = "one-armed amplitude"
+#window_frac  = 0.5
+#jbins=16
+#list_of_pc_lists = [
+#    [0,1],[2],[0,1,2],[3,4],[5],[2,5],[6,7],[8,9,10,11],"6:12",
+#    "3:12","3:8","3:31","0:8","0:12","0:31",
+#    "8:31","31:42","42:50"
+#]
 
 
-[runs.B2_outer]
-data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_B2/m1_amp_outer.dat"
-sim_name     = "B2"
-channel_name = "one-armed amplitude"
-window_frac  = 0.5
-jbins=16
-list_of_pc_lists = [
-    [0,1],[2,3],[4],[5,6,7,8],[5,6],[7,8],[9,10],[11,12],[13,14],[15,16],
-    "0:4","0:9","0:15","0:17","0:39",
-    "2:9","2:11","2:15","2:17","2:39","9:15","17:39",
-    "39:50"
-]
+#[runs.B2_outer]
+#data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_B2/m1_amp_outer.dat"
+#sim_name     = "B2"
+#channel_name = "one-armed amplitude"
+#window_frac  = 0.5
+#jbins=16
+#list_of_pc_lists = [
+#    [0,1],[2,3],[4],[5,6,7,8],[5,6],[7,8],[9,10],[11,12],[13,14],[15,16],
+#    "0:4","0:9","0:15","0:17","0:39",
+#    "2:9","2:11","2:15","2:17","2:39","9:15","17:39",
+#    "39:50"
+#]
 
 
-[runs.B2_first_passage_inner]
-data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_B2/m1_amp_first_passage_inner.dat"
-sim_name     = "B2"
-channel_name = "one-armed amplitude"
-window_frac  = 0.5
-jbins=16
-list_of_pc_lists = [
-    [0,1],[2,3],[4,5],[6,7],[8,9],[10,11],[10,11,12,13],[14,15,16,17],
-    "0:10","0:12","0:18","2:10","2:12","2:18","8:14","21:50"
-]
+#[runs.B2_first_passage_inner]
+#data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_B2/m1_amp_first_passage_inner.dat"
+#sim_name     = "B2"
+#channel_name = "one-armed amplitude"
+#window_frac  = 0.5
+#jbins=16
+#list_of_pc_lists = [
+#    [0,1],[2,3],[4,5],[6,7],[8,9],[10,11],[10,11,12,13],[14,15,16,17],
+#    "0:10","0:12","0:18","2:10","2:12","2:18","8:14","21:50"
+#]
 
 
-[runs.B2_first_passage_outer]
-data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_B2/m1_amp_first_passage_outer.dat"
-sim_name     = "B2"
-channel_name = "one-armed amplitude"
-window_frac  = 0.5
-jbins=16
-list_of_pc_lists = [
-    [0,1],[2,3],[4,5],[6,7],"4:8","8:14",[14,15],
-    "0:4","0:8","0:14","0:16","0:24",
-    "2:4","2:8","2:14","2:16","2:24","24:36","36:50",
-    "14:24","8:24"
-]
+#[runs.B2_first_passage_outer]
+#data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_B2/m1_amp_first_passage_outer.dat"
+#sim_name     = "B2"
+#channel_name = "one-armed amplitude"
+#window_frac  = 0.5
+#jbins=16
+#list_of_pc_lists = [
+#    [0,1],[2,3],[4,5],[6,7],"4:8","8:14",[14,15],
+#    "0:4","0:8","0:14","0:16","0:24",
+#    "2:4","2:8","2:14","2:16","2:24","24:36","36:50",
+#    "14:24","8:24"
+#]
 
 
-[runs.B2_second_passage_inner]
-data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_B2/m1_amp_second_passage_inner.dat"
-sim_name     = "B2"
-channel_name = "one-armed amplitude"
-window_frac  = 0.5
-jbins=16
-list_of_pc_lists = [
-    [0,1],[2,3],[4,7],[5,6],[8,9],[4,5,6,7],
-    "0:4","0:8","0:17","0:25",
-    "2:8","2:17","2:25","4:17",
-    "25:40","25:50","40:50","17:25","10:17"
-]
+#[runs.B2_second_passage_inner]
+#data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_B2/m1_amp_second_passage_inner.dat"
+#sim_name     = "B2"
+#channel_name = "one-armed amplitude"
+#window_frac  = 0.5
+#jbins=16
+#list_of_pc_lists = [
+#    [0,1],[2,3],[4,7],[5,6],[8,9],[4,5,6,7],
+#    "0:4","0:8","0:17","0:25",
+#    "2:8","2:17","2:25","4:17",
+#    "25:40","25:50","40:50","17:25","10:17"
+#]
 
 
-[runs.B2_second_passagee_outer]
-data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_B2/m1_amp_second_passage_outer.dat"
-sim_name     = "B2"
-channel_name = "one-armed amplitude"
-window_frac  = 0.5
-jbins=16
-list_of_pc_lists = [
-    [0,1,2,3],[4,5],[6,7],[8,9],"0:6","0:10","6:10",
-    "10:16","10:26","26:50","0:26"
-]
+#[runs.B2_second_passagee_outer]
+#data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_B2/m1_amp_second_passage_outer.dat"
+#sim_name     = "B2"
+#channel_name = "one-armed amplitude"
+#window_frac  = 0.5
+#jbins=16
+#list_of_pc_lists = [
+#    [0,1,2,3],[4,5],[6,7],[8,9],"0:6","0:10","6:10",
+#    "10:16","10:26","26:50","0:26"
+#]
