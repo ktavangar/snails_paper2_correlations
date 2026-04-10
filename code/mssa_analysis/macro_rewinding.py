@@ -303,23 +303,3 @@ class RewindMacroSpiral():
         else:
             fig.colorbar(im, ax=axs[1], label='One Armed Phase Spiral Amplitude',
                          shrink=0.8)
-
-    def fit_all_pc_macro_spirals(mssa, list_of_pc_lists, jphi_min, jbins, sim_name, channel_name, 
-                             INDIVIDUAL_WINDING_DIR, DIPOLE_DIR, WINDING_DIR):
-        for pc_list in list_of_pc_lists:
-
-            mssa.reconstruct(pc_list)
-            get_recon = mssa.getReconstructed()
-            pc_rc = get_recon[list(get_recon.keys())[0]].getAllCoefs()
-            MS = RewindMacroSpiral(pc_rc, pc_list, jphi_min, jbins, sim_name, channel_name, m=1)
-            MS.plot_macro_tfit_over_time(threshold=np.pi/2, savefig=True, fig_dir=WINDING_DIR)
-
-            PC_WINDING_DIR = os.path.join(INDIVIDUAL_WINDING_DIR, MS.pc_string)
-            os.makedirs(PC_WINDING_DIR, exist_ok=True)
-            
-            PC_DIPOLE_DIR = os.path.join(DIPOLE_DIR, MS.pc_string)
-            os.makedirs(PC_DIPOLE_DIR, exist_ok=True)
-
-            for tstep in range(pc_rc.shape[1]):
-                MS.plot_fitting_tstep(tstep, threshold=np.pi/2, savefig=True, fig_dir=PC_WINDING_DIR)
-                MS.make_rewind_dipole_fig(tstep, savefig=True, fig_dir=PC_DIPOLE_DIR)

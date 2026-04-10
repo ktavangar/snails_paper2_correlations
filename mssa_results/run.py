@@ -18,7 +18,9 @@ from pathlib import Path
 
 import numpy as np
 import pyEXP
+import matplotlib as mpl
 import matplotlib.pyplot as plt
+import cmasher as cmr
 
 plt.rc('text', usetex=False)
 
@@ -29,8 +31,12 @@ CONFIG_FILE = SCRIPT_DIR / 'runs.toml'
 
 from run_helper_funcs import make_dirs, expand_pc_entry
 sys.path.append(str(PROJECT_ROOT / 'code/mssa_analysis/'))
-import diagnostics
-from macro_rewinding import RewindMacroSpiral
+from mssa_viz import (
+    MakeAnimations,
+    RewindMacroSpiral,
+    compute_data_limits,
+    plot_eigenvalues, plot_fg_matrices, plot_wcorr, plot_pc_time_series,
+)
 
 
 # --- Argument parsing ---
@@ -76,7 +82,7 @@ jphi_min         = get('jphi_min', 1000.0)
 jbins            = get('jbins', 26)
 list_of_pc_lists = [expand_pc_entry(e) for e in get('list_of_pc_lists', [])]
 
-FIG_DIR, INDIVIDUAL_WINDING_DIR, DIPOLE_DIR, MOVIES_DIR, WINDING_DIR = make_dirs(FIG_DIR)
+FIG_DIR, INDIVIDUAL_WINDING_DIR, MOVIES_DIR, WINDING_DIR = make_dirs(FIG_DIR)
 
 print(f"Run: {args.run_name}")
 
@@ -91,18 +97,14 @@ if args.data_macro_fitting:
     DATA_WINDING_DIR = os.path.join(INDIVIDUAL_WINDING_DIR, 'data')
     os.makedirs(DATA_WINDING_DIR, exist_ok=True)
 
-    DATA_DIPOLE_DIR = os.path.join(DIPOLE_DIR, 'data')
-    os.makedirs(DATA_DIPOLE_DIR, exist_ok=True)
-    for tstep_ind in range(len(data_)):
+    for tstep_ind in range(data.shape[1]):
         DataMacroFitting.plot_fit_and_dipole(tstep_ind, threshold=np.pi/2, savefig=True, fig_dir=DATA_WINDING_DIR)
-        # DataMacroFitting.plot_fitting_tstep(tstep_ind, threshold=np.pi/2, savefig=True, fig_dir=DATA_WINDING_DIR)
-        # DataMacroFitting.make_rewind_dipole_fig(tstep_ind, savefig=True, fig_dir=DATA_DIPOLE_DIR)
 
 #####################################
 ## Run M-SSA and Quick Diagnostics ##
 #####################################
 
-if args.diagnostics | args.macro_fitting | args.movies:
+if args.diagnostics or args.macro_fitting or args.movies:
     # --- Load coefficients ---
     print('Loading coefficients...')
     coefs0 = pyEXP.coefs.Coefs.factory(data_file)
@@ -121,54 +123,68 @@ if args.diagnostics | args.macro_fitting | args.movies:
     print(f'Running mSSA: {n_channels} channels, window={window}, npc={npc}')
     mssa = pyEXP.mssa.expMSSA(config_mssa, window, npc, flags)
 
-    # --- Eigenvalues and reconstruction ---
+    # --- Eigenvalues ---
     print('Computing eigenvalues...')
     ev = mssa.eigenvalues()
 
-    coefs.zerodata()
-    mssa.reconstruct([*range(npc)])
-
 # --- Diagnostic plots ---
 if args.diagnostics:
-    diagnostics.plot_eigenvalues(ev, FIG_DIR)
-    diagnostics.plot_fg_matrices(mssa, FIG_DIR)
-    diagnostics.plot_wcorr(mssa, FIG_DIR)
-    diagnostics.plot_pc_time_series(mssa, times, FIG_DIR)
+    # Full reconstruction across all PCs is required before calling
+    # mssa.contrib() (F/G matrices) and mssa.wCorrAll() (W-correlation).
+    coefs.zerodata()
+    mssa.reconstruct([*range(npc)])
+    
+    plot_eigenvalues(ev, FIG_DIR)
+    plot_fg_matrices(mssa, FIG_DIR)
+    plot_wcorr(mssa, FIG_DIR)
+    plot_pc_time_series(mssa, times, FIG_DIR)
 
-#################################
-## Fitting Macro-Spiral to PCs ##
-#################################
+###################################################################
+## Per-PC-group loop: reconstruct → macro fitting → movies      ##
+## All work for a given PC group is done before moving to the   ##
+## next, so mssa.reconstruct() is called exactly once per group.##
+###################################################################
 
-if args.macro_fitting:
-    for pc_list in list_of_pc_lists:
-
-        mssa.reconstruct(pc_list)
-        get_recon = mssa.getReconstructed()
-        pc_rc = get_recon[list(get_recon.keys())[0]].getAllCoefs()
-        MS = RewindMacroSpiral(pc_rc, pc_list, jphi_min, jbins, sim_name, channel_name, m=1)
-        MS.plot_macro_tfit_over_time(threshold=np.pi/2, savefig=True, fig_dir=WINDING_DIR)
-
-        PC_WINDING_DIR = os.path.join(INDIVIDUAL_WINDING_DIR, MS.pc_string)
-        PC_DIPOLE_DIR = os.path.join(DIPOLE_DIR, MS.pc_string)
-        os.makedirs(PC_WINDING_DIR, exist_ok=True)
-        os.makedirs(PC_DIPOLE_DIR, exist_ok=True)
-
-        for tstep in range(pc_rc.shape[1]):
-            MS.plot_fit_and_dipole(tstep, threshold=np.pi/2, savefig=True, fig_dir=PC_WINDING_DIR)
-            # MS.plot_fitting_tstep(tstep, threshold=np.pi/2, savefig=True, fig_dir=PC_WINDING_DIR)
-            # MS.make_rewind_dipole_fig(tstep, savefig=True, fig_dir=PC_DIPOLE_DIR)
-
-
-###################################
-## Making Movies of Data and PCs ##
-###################################
-if args.movies:
+if args.macro_fitting or args.movies:
     if not list_of_pc_lists:
-        print('Warning: list_of_pc_lists is empty in runs.toml — data movies only.')
-    print('Creating dual-panel movies...')
-    diagnostics.make_dual_movies(
-        mssa, data_file, times, MOVIES_DIR, list_of_pc_lists,
-        sim_name=sim_name, channel_name=channel_name,
-        jphi_min=jphi_min, jbins=jbins)
+        print('Warning: list_of_pc_lists is empty in runs.toml — skipping PC loop.')
+
+    # Build the data movie once before the PC loop (movies only).
+    if args.movies:
+        data_tbl = np.loadtxt(data_file)
+        data_vmin, data_vmax = compute_data_limits(data_tbl)
+        print(f'Data movie limits: vmin={data_vmin:.1f}, vmax={data_vmax:.1f}')
+        MA = MakeAnimations(mssa, sim_name=sim_name, channel_name=channel_name,
+                            times=times, jphi_min=jphi_min, jbins=jbins)
+        MA.make_dual_data_mov(
+            os.path.join(MOVIES_DIR, 'data_dual.mp4'), data_tbl,
+            norm_function=mpl.colors.LogNorm, cmap=cmr.sunburst,
+            vmin=data_vmin, vmax=data_vmax,
+        )
+
+    for pc_list in list_of_pc_lists:
+        print(f'\nProcessing PC group {pc_list}...')
+
+        # --- Single shared reconstruction for this PC group ---
+        mssa.reconstruct(pc_list)
+        recon = mssa.getReconstructed()
+        pc_rc = recon[list(recon.keys())[0]].getAllCoefs()
+
+        # --- Macro-spiral fitting ---
+        if args.macro_fitting:
+            MS = RewindMacroSpiral(pc_rc, pc_list, jphi_min, jbins,
+                                   sim_name, channel_name, m=1)
+            MS.plot_macro_tfit_over_time(threshold=np.pi/2,
+                                         savefig=True, fig_dir=WINDING_DIR)
+            PC_WINDING_DIR = os.path.join(INDIVIDUAL_WINDING_DIR, MS.pc_string)
+            os.makedirs(PC_WINDING_DIR, exist_ok=True)
+            for tstep in range(pc_rc.shape[1]):
+                MS.plot_fit_and_dipole(tstep, threshold=np.pi/2,
+                                       savefig=True, fig_dir=PC_WINDING_DIR)
+
+        # --- Movies (reuse the reconstruction computed above) ---
+        if args.movies:
+            MA.load_reconstruction(pc_rc, pc_list)
+            MA.make_pc_movie_pair(MOVIES_DIR, data_vmin, data_vmax, dual=True)
 
 print('Done. All outputs saved to:', FIG_DIR)

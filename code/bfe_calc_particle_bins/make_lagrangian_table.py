@@ -58,16 +58,12 @@ def worker(batch, TableSetup, sim, bin_index_file, action_dir):
     t = TableSetup.create_empty_table()
 
     for timestep in tasks:
-        if (sim == 'live') | (sim == 'B2'):
-            action_file = action_dir + f'MedianFlattenedDiskActions{int(timestep)}.npy'
-        elif sim == 'test':
-            action_file = action_dir + f'Actions{int(timestep)}.p'
 
         print(f'Processing timestep {timestep} on rank {rank}', flush=True)
         new_t = TableSetup.fill_table(
             timestep,
             sim=sim,
-            action_file=action_file
+            action_dir=action_dir
         )
         t = vstack([t, new_t])
 

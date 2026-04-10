@@ -532,16 +532,24 @@ def make_face_on_movies(mssa, data_file, times, face_on_dir, list_of_pc_lists,
 
 def make_dual_movies(mssa, data_file, times, face_on_dir, list_of_pc_lists,
                      sim_name, channel_name, jphi_min, jbins,
-                     cmap_log=None, cmap_sym=None):
+                     cmap_log=None, cmap_sym=None, precomputed_reconstructions=None):
     """
     Generate dual-panel (polar + Cartesian) movies: raw data + one pair per PC group.
     Files are saved with a '_dual.mp4' suffix alongside the polar-only movies.
+
+    Parameters
+    ----------
+    precomputed_reconstructions : dict, optional
+        Maps tuple(pc_list) -> pc_rc array. If provided, skips mssa.reconstruct()
+        for matching pc_lists (avoids recomputing when macro_fitting already ran).
     """
     import cmasher as cmr
     if cmap_log is None:
         cmap_log = cmr.sunburst
     if cmap_sym is None:
         cmap_sym = cmr.holly
+    if precomputed_reconstructions is None:
+        precomputed_reconstructions = {}
 
     data = np.loadtxt(data_file)
     MakeAnim = MakeAnimations(mssa, sim_name=sim_name, channel_name=channel_name,
@@ -559,7 +567,12 @@ def make_dual_movies(mssa, data_file, times, face_on_dir, list_of_pc_lists,
 
     for pc_list in list_of_pc_lists:
         print(f'  Creating dual movie for PCs {pc_list}')
-        MakeAnim.reconstruct_from_pcs(pcs=pc_list)
+        cached = precomputed_reconstructions.get(tuple(pc_list))
+        if cached is not None:
+            MakeAnim.pcs = pc_list
+            MakeAnim.pc_rc = cached
+        else:
+            MakeAnim.reconstruct_from_pcs(pcs=pc_list)
 
         vmin_pc, vmax_pc, linthresh_ms = compute_pc_limits(
             MakeAnim.pc_rc, MakeAnim.T.shape,

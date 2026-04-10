@@ -8,15 +8,13 @@ def expand_pc_entry(entry):
     return list(entry)
 
 def make_dirs(FIG_DIR):
-    INDIVIDUAL_WINDING_DIR = os.path.join(FIG_DIR, 'individual_winding_time_fits')
-    DIPOLE_DIR = os.path.join(FIG_DIR, 'dipole_figs')
+    INDIVIDUAL_WINDING_DIR = os.path.join(FIG_DIR, 'individual_winding_fits')
     MOVIES_DIR = os.path.join(FIG_DIR, 'movies')
     WINDING_DIR = os.path.join(FIG_DIR, 'winding_plots')
 
     os.makedirs(FIG_DIR, exist_ok=True)
-    os.makedirs(DIPOLE_DIR, exist_ok=True)
     os.makedirs(INDIVIDUAL_WINDING_DIR, exist_ok=True)
     os.makedirs(WINDING_DIR, exist_ok=True)
     os.makedirs(MOVIES_DIR, exist_ok=True)
 
-    return FIG_DIR, INDIVIDUAL_WINDING_DIR, DIPOLE_DIR, MOVIES_DIR, WINDING_DIR
+    return FIG_DIR, INDIVIDUAL_WINDING_DIR, MOVIES_DIR, WINDING_DIR

@@ -16,6 +16,7 @@ source ~/.bash_profile # probably unnecessary
 #stdbuf -i0 -o0 -e0 mpirun python3 -m mpi4py.futures /mnt/home/ktavangar/projects/MSSA_Snails/code/make_mssa_table.py --mpi
 srun python3 -m mpi4py.run -rc thread_level='funneled' \
     /mnt/home/ktavangar/projects/MSSA_Snails/code/make_lagrangian_table.py \
+    --assign-bins \
     --mpi \
     --ref-timestep 40 \
     --action-dir /../Kiyan-Single-Passage/full/ \
