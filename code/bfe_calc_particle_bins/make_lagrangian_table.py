@@ -32,7 +32,7 @@ from argparse import ArgumentParser
 from functools import partial
 from astropy.table import vstack
 
-from mpi4py import MPI
+# from mpi4py import MPI
 from schwimmbad.utils import batch_tasks
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
@@ -57,15 +57,17 @@ def worker(batch, TableSetup, sim, bin_index_file, action_dir):
     rank = MPI.COMM_WORLD.Get_rank()
     t = TableSetup.create_empty_table()
 
+    tables=[]   
     for timestep in tasks:
 
         print(f'Processing timestep {timestep} on rank {rank}', flush=True)
         new_t = TableSetup.fill_table(
             timestep,
             sim=sim,
-            action_dir=action_dir
+            actions_dir=action_dir
         )
-        t = vstack([t, new_t])
+        tables.append(new_t)
+    t = vstack(tables)
 
     t.write(cache_file, overwrite=True)
     return cache_file
@@ -144,8 +146,8 @@ if __name__ == '__main__':
         LT = LagrangianMSSATable()
         LT.assign_bins(data_ref)
         LT.save_bin_indices(args.bin_index_file)
-        print('Done.')
-        sys.exit(0)
+        print('Bin Indices saved')
+        # sys.exit(0)
 
     # --- Step 2: fill tables ---
     if args.mpi:

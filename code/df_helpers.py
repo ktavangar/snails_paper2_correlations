@@ -103,23 +103,24 @@ class LaguerreSnails:
     #     r = Jzs * np.exp(-k*thetas) + b
 
     
-    def get_coeffs(self):
+    def get_coeffs(self, std=False):
         '''
         Generate the coefficients for the BFE
         '''
         self.coeffs = np.zeros((self.m_max,self.n_max), dtype=np.complex128)      #coefficient array
-        self.coeffs_std = np.zeros((self.m_max, self.n_max), dtype=np.complex128) #coefficient error array
+        if std:
+            self.coeffs_std = np.zeros((self.m_max, self.n_max), dtype=np.complex128) #coefficient error array
         
         #calculate coefficients
         #print('Calculating coefficients...')
-        for m,n in product(range(self.m_max), range(self.n_max)):
-            coeff = self.n_m(m) * \
-                    np.sum(self.disk_lag(n, self.sel.jz, self.a) * \
-                           np.exp(1j*m*self.sel.theta_z) * self.sel.jz) # Fourier component
+        exp_m = [np.exp(1j * m * self.sel.theta_z) for m in range(self.m_max)]
+        for m, n in product(range(self.m_max), range(self.n_max)):
+            coeff = self.n_m(m) * np.sum(self.disk_lag(n, self.sel.jz, self.a) * exp_m[m] * self.sel.jz)
             self.coeffs[m, n] = coeff
-            self.coeffs_std[m, n] = np.sqrt(self.n_m(m) * np.sum((self.disk_lag(n, self.sel.jz, self.a) * \
-                                                             np.exp(1j*m*self.sel.theta_z) * self.sel.jz - \
-                                                             coeff/len(self.sel))**2))
+            if std:
+                self.coeffs_std[m, n] = np.sqrt(self.n_m(m) * np.sum((self.disk_lag(n, self.sel.jz, self.a) * \
+                                                                np.exp(1j*m*self.sel.theta_z) * self.sel.jz - \
+                                                                coeff/len(self.sel))**2))
         return self.coeffs
     
     def create_df(self, n_maxs): # have not updated notebook with this yet
@@ -164,11 +165,16 @@ class LaguerreSnails:
         root_jz = np.sqrt(self.sel.jz)
         self.xdata, self.ydata = root_jz*np.cos(self.sel.theta_z), root_jz*np.sin(self.sel.theta_z)
 
+        xrange = [-self.rootjzmax-self.rootjzstep/2, self.rootjzmax+self.rootjzstep/2]
+        yrange = [-self.rootjzmax-self.rootjzstep/2, self.rootjzmax+self.rootjzstep/2]
+
         rdata = np.sqrt(self.xdata**2+self.ydata**2)
 
         # counts: how many stars are in each (sqrt(J_z)sin(theta_z), sqrt(J_z)cos(theta_z)) bin
-        counts,xedges,yedges,_=stats.binned_statistic_2d(self.ydata,self.xdata,\
-                                                        None, statistic='count', bins=(self.jzbins, self.jzbins))
+        counts,xedges,yedges,_= scipy.stats.binned_statistic_2d(self.ydata,self.xdata,\
+                                                 None, statistic='count',
+                                                 bins = (self.jzbins.shape[0],self.jzbins.shape[0]),
+                                                 range=[xrange,yrange])
         # Get some additional facts about the bins
         self.extent = [yedges[0],yedges[-1], xedges[0],xedges[-1]] # Should get this just from the grid no?
         x_centers, y_centers = 0.5*(xedges[1:]+xedges[:-1]), 0.5*(yedges[1:]+yedges[:-1])
@@ -239,6 +245,8 @@ class LaguerreSnails:
         plt.show()
     
     def plot_ncoeffs(self, n_maxs): # have not updated notebook with this yet
+        self.get_coeffs(std=True)
+
         if self.m_max > 2:
             ns_ = np.arange(n_maxs[2])
             fig, [ax1,ax2] = plt.subplots(1,2,figsize=(9,4), sharey = True)
@@ -328,8 +336,8 @@ class LaguerreSnails:
         return fig
         
     def plot_spiral_recon(self):
-        xgrid, ygrid = np.arange(-self.rootjzmax,self.rootjzmax,self.rootjzstep), np.arange(-self.rootjzmax,self.rootjzmax,self.rootjzstep)
-        
+        xgrid = np.arange(-self.rootjzmax,self.rootjzmax+1e-5,self.rootjzstep)
+        ygrid = np.arange(-self.rootjzmax,self.rootjzmax+1e-5,self.rootjzstep)
         fig, [ax1, ax2] = plt.subplots(1,2,figsize=(11,5), sharey=True)
         plot_lims = np.sqrt(np.max(self.Jz_grid))
         im1 = ax1.pcolormesh(xgrid, ygrid, self.recon_df, 
@@ -355,7 +363,8 @@ class LaguerreSnails:
         plt.show()
         
     def summary_plots(self):
-        xgrid, ygrid = np.arange(-self.rootjzmax,self.rootjzmax,self.rootjzstep), np.arange(-self.rootjzmax,self.rootjzmax,self.rootjzstep)
+        xgrid = np.arange(-self.rootjzmax,self.rootjzmax+1e-5,self.rootjzstep)
+        ygrid = np.arange(-self.rootjzmax,self.rootjzmax+1e-5,self.rootjzstep)
         fig, [ax1, ax2, ax3] = plt.subplots(1,3,figsize=(16,5), sharey=True)
         plot_lims = np.sqrt(np.max(self.Jz_grid))
         
@@ -404,19 +413,15 @@ class LaguerreSnails:
     def get_pitch_phase_angles(self, m):
         
         ns_ = np.arange(self.n_maxs[m])
-        ang=self.thetaz_grid
-        
-        def find_peak(thetaz, Jz, m):
-            contrib = [self.coeffs[m,n] * self.disk_lag(n,Jz,self.a) for n in ns_]
-            C = np.sum(contrib,axis=0)
-            real = (C*np.exp(-1j*m*thetaz)).real
-            return -real # so that I can use scipy.optimize.fmin
 
         peaks_ = np.zeros(len(self.Jz_grid))
+
         for i in range(len(self.Jz_grid)):
             act = self.Jz_grid[i]
-            new_peak = scipy.optimize.fmin(find_peak, x0=np.pi, args=(act, m), disp=False)
-            peaks_[i] = new_peak[0]
+            C = np.sum([self.coeffs[m, n] * self.disk_lag(n, act, self.a) for n in ns_], axis=0)
+            def find_peak(thetaz, C=C):
+                return -(C * np.exp(-1j * m * thetaz)).real
+            peaks_[i] = scipy.optimize.fmin(find_peak, x0=np.pi, disp=False)[0]
         peaks = 1/m * np.unwrap(m*peaks_) # multiply and divide to correctly use the unwrap function
         
         spl = IUS(np.sqrt(self.Jz_grid), peaks)
