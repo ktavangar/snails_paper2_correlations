@@ -94,8 +94,9 @@ if args.data_macro_fitting:
     DATA_DIPOLE_DIR = os.path.join(DIPOLE_DIR, 'data')
     os.makedirs(DATA_DIPOLE_DIR, exist_ok=True)
     for tstep_ind in range(len(data_)):
-        DataMacroFitting.plot_fitting_tstep(tstep_ind, threshold=np.pi/2, savefig=True, fig_dir=DATA_WINDING_DIR)
-        DataMacroFitting.make_rewind_dipole_fig(tstep_ind, savefig=True, fig_dir=DATA_DIPOLE_DIR)
+        DataMacroFitting.plot_fit_and_dipole(tstep_ind, threshold=np.pi/2, savefig=True, fig_dir=DATA_WINDING_DIR)
+        # DataMacroFitting.plot_fitting_tstep(tstep_ind, threshold=np.pi/2, savefig=True, fig_dir=DATA_WINDING_DIR)
+        # DataMacroFitting.make_rewind_dipole_fig(tstep_ind, savefig=True, fig_dir=DATA_DIPOLE_DIR)
 
 #####################################
 ## Run M-SSA and Quick Diagnostics ##
@@ -153,8 +154,9 @@ if args.macro_fitting:
         os.makedirs(PC_DIPOLE_DIR, exist_ok=True)
 
         for tstep in range(pc_rc.shape[1]):
-            MS.plot_fitting_tstep(tstep, threshold=np.pi/2, savefig=True, fig_dir=PC_WINDING_DIR)
-            MS.make_rewind_dipole_fig(tstep, savefig=True, fig_dir=PC_DIPOLE_DIR)
+            MS.plot_fit_and_dipole(tstep, threshold=np.pi/2, savefig=True, fig_dir=PC_WINDING_DIR)
+            # MS.plot_fitting_tstep(tstep, threshold=np.pi/2, savefig=True, fig_dir=PC_WINDING_DIR)
+            # MS.make_rewind_dipole_fig(tstep, savefig=True, fig_dir=PC_DIPOLE_DIR)
 
 
 ###################################

@@ -52,15 +52,38 @@ class RewindMacroSpiral():
         else: # continuous pcs
             self.pc_string = 'pc{}-{}'.format(self.pcs[0], self.pcs[-1])
 
+    def _fit_sine_maximum(self, data_col, m):
+        """
+        Fit a pure Fourier mode of order m to data_col sampled at self.tphi_c.
+        Returns (phi_max, rss): angle of maximum and residual sum of squares.
+        phi_max = arctan2(A_sin, A_cos) / m, in (-pi/m, pi/m].
+        """
+        theta = self.tphi_c
+        n = len(theta)
+        X = np.column_stack([np.ones(n), np.cos(m*theta), np.sin(m*theta)])
+        c, _, _, _ = np.linalg.lstsq(X, data_col, rcond=None)
+        rss = np.sum((data_col - X @ c)**2)
+        return np.arctan2(c[2], c[1]) / m, rss
+
     def fit_macro_spiral(self, tstep, threshold=np.pi):
         # get the array of reconstructed amplitudes from the PCs
         self.tstep_data = np.reshape(self.pc_rc[:,tstep], self.T.shape, 'F')
 
-        #get angle of maximum amplitude at each Jphi for the given timestep
-        max_inds = np.argmax(self.tstep_data, axis=0)
-        
-        max_angles_ = self.tphi_c[max_inds]
-        self.max_angles = 1/self.m * np.unwrap(self.m*max_angles_)
+        # for each Jphi bin, determine which mode fits better
+        nbins = self.tstep_data.shape[1]
+        m1_wins = sum(
+            self._fit_sine_maximum(self.tstep_data[:, j], 1)[1] <=
+            self._fit_sine_maximum(self.tstep_data[:, j], 2)[1]
+            for j in range(nbins)
+        )
+        self.best_m = 1 if m1_wins >= nbins / 2 else 2
+
+        # fit all bins with the winning mode
+        max_angles_ = np.array([self._fit_sine_maximum(self.tstep_data[:, j], self.best_m)[0]
+                                 for j in range(nbins)])
+        # wrap to [0, 2pi/m) then unwrap
+        max_angles_ = max_angles_ % (2 * np.pi / self.best_m)
+        self.max_angles = 1/self.best_m * np.unwrap(self.best_m * max_angles_)
 
         ind1, ind2 = self.find_fitting_interval(threshold=threshold)
         self.jphi_c_fit = self.jphi_c[ind1:ind2]
@@ -110,72 +133,14 @@ class RewindMacroSpiral():
             print(f"Error occurred while fitting macro spiral at tstep {tstep}")
             return np.nan
 
-        # jphi1, jphi2 = self.jphi_c_fit[0], self.jphi_c_fit[-1]
-        #get the angle at two chosen radii
-        # theta1, theta2 = self.macro_spl(jphi1), self.macro_spl(jphi2)
-
         #get the frequencies at those radii
-        # omega_spline = make_splrep(self.jphi_c, self.omega_phi, w=None, k=3, s=0)
-        # omega1, omega2 = omega_spline(jphi1), omega_spline(jphi2)
         omega1, omega2 = self.omega_phi_fit[0], self.omega_phi_fit[-1]
         theta1, theta2 = self.macro_spl_omega(omega1), self.macro_spl_omega(omega2)
 
         #calculate the winding time
         tfit = (theta2 - theta1) / (omega2 - omega1)
         return tfit
-
-    def plot_fitting_tstep(self, tstep, threshold=np.pi, 
-                           ax=None, savefig=False, fig_dir=None):
-        try:
-            self.fit_macro_spiral(tstep, threshold=threshold)
-        except:
-            print(f"Error occurred while fitting macro spiral at tstep {tstep}")
-            return
-
-        # j_fit = np.linspace(self.jphi_c_fit[0], self.jphi_c_fit[-1], 100)
-        omega_fit = np.linspace(self.omega_phi_fit[0], self.omega_phi_fit[-1], 100)
-        # theta_fit = self.macro_spl(j_fit)
-        theta_fit = self.macro_spl_omega(omega_fit)
-
-        cmap = cmr.sunburst
-        if np.all(self.tstep_data > 0):
-            norm = mpl.colors.LogNorm(vmin=np.min(self.tstep_data), 
-                                      vmax=np.max(self.tstep_data))
-        else:
-            vmax = np.max(np.abs(self.tstep_data))
-            norm = mpl.colors.SymLogNorm(linthresh=vmax/1e2, vmin=-vmax, vmax=vmax)
-            cmap = cmr.holly
-
-        if ax is None:
-            plt.figure(figsize=(8,5))
-            ax = plt.gca()
-        # ax.pcolormesh(self.J, self.T, self.tstep_data, cmap=cmap, norm=norm, alpha=0.3)
-        ax.pcolormesh(self.O, self.T2, self.tstep_data, cmap=cmap, norm=norm, alpha=0.3)
-        # ax.plot(self.jphi_c, self.max_angles % (2*np.pi), 'o', c='k', ms=5, 
-        #         label='Max Amplitude Angles')
-        ax.plot(self.omega_phi, self.max_angles % (2*np.pi), 'o', c='k', ms=5, 
-                label='Max Amplitude Angles')
-        # ax.plot(j_fit, theta_fit % (2*np.pi), '-', 
-        #         label='Cubic Spline Fit')
-        ax.plot(omega_fit, theta_fit % (2*np.pi), '-', 
-                label='Cubic Spline Fit')
-        # ax.axvline(self.jphi_c_fit[0], color='r', linestyle='--', 
-        #            label=f'j={self.jphi_c_fit[0]}')
-        # ax.axvline(self.jphi_c_fit[-1], color='g', linestyle='--', 
-        #            label=f'j={self.jphi_c_fit[-1]}')
-        ax.axvline(self.omega_phi_fit[0], color='r', linestyle='--', 
-                   label=f'j={self.jphi_c_fit[0]}')
-        ax.axvline(self.omega_phi_fit[-1], color='g', linestyle='--', 
-                   label=f'j={self.jphi_c_fit[-1]}')
-        # ax.set_xlabel(r'$J_\phi$')
-        ax.set_xlabel(r'$\Omega_\phi$')
-        ax.set_ylabel(r'$\theta_{max}$')
-        ax.set_title('Fitting the Macro Spiral')
-        ax.legend()
-        if savefig:
-            plt.savefig(fig_dir + f'/macro_fit_t{int(tstep)}_{self.pc_string}.pdf')
-        plt.close()
-
+    
     def plot_macro_tfit_over_time(self, threshold=np.pi, 
                                   ax=None, savefig=False, fig_dir=None):
         ntimes = self.pc_rc.shape[-1]
@@ -192,77 +157,152 @@ class RewindMacroSpiral():
                 label='Fitted Winding Time')
         ax.plot([0,ntimes*self.tstep_diff], [0,ntimes*self.tstep_diff], 'k--', 
                 label='t_fit = t')
-        ax.set_xlabel('Simulation Time (Gyr)')
-        ax.set_ylabel('Winding Time (Gyr)')
+        ax.set_xlabel('Simulation Time (Gyr)', fontsize=14)
+        ax.set_ylabel('Winding Time (Gyr)', fontsize=14)
 
-        ax.set_title(f'{self.sim_name} {self.channel_name} tfit for {self.pc_string}')
+        ax.set_title(f'{self.sim_name} {self.channel_name} tfit for {self.pc_string}', 
+                     fontsize=16)
         ax.set_aspect('equal')
         ax.set_xlim(0,ntimes*self.tstep_diff)
-        ax.set_ylim(0,ntimes*self.tstep_diff)
+        ax.set_ylim(0,3.5)
         ax.legend()
         if savefig:
             plt.savefig(fig_dir + f'/winding_times_{self.pc_string}.pdf')
         plt.close()
         print(f'Saved winding time fit figure for {self.pc_string}')
 
+    def plot_fit_and_dipole(self, tstep, threshold=np.pi/2,
+                            savefig=False, fig_dir=None):
+        try:
+            tfit = self.derive_winding_time(tstep, threshold=threshold)
+            if np.isnan(tfit):
+                print(f"Could not derive winding time for tstep {tstep}, \
+                    skipping rewind dipole figure.")
+                return
+        except:
+            print(f"Error occurred while fitting macro spiral at tstep {tstep}")
+            return
+        
+        fig = plt.figure(figsize=(12, 10))
+        gs = fig.add_gridspec(2, 2, hspace=0.4, wspace=0.4)
+        ax_top = fig.add_subplot(gs[0, :])
+        ax_left = fig.add_subplot(gs[1, 0], projection='polar')
+        ax_right = fig.add_subplot(gs[1, 1], projection='polar')
+
+        self.plot_fitting_tstep(tstep, threshold=threshold, ax=ax_top)
+        self.make_rewind_dipole_fig(tstep, axs=[ax_left, ax_right])
+
+        fig.suptitle(f'{self.sim_name} {self.channel_name}, {self.pc_string}',
+                     fontsize=16)
+        if savefig:
+            plt.savefig(fig_dir + f'/fit_and_dipole_t{int(tstep)}_{self.pc_string}.pdf')
+        plt.close()
+    
+    def plot_fitting_tstep(self, tstep, threshold=np.pi,
+                           ax=None, savefig=False, fig_dir=None):
+        try:
+            tfit = self.derive_winding_time(tstep, threshold=threshold)
+        except:
+            print(f"Error occurred while fitting macro spiral at tstep {tstep}")
+            return
+
+        omega_fit = np.linspace(self.omega_phi_fit[0], self.omega_phi_fit[-1], 100)
+        theta_fit = self.macro_spl_omega(omega_fit)
+
+        cmap = cmr.sunburst
+        if np.all(self.tstep_data > 0):
+            norm = mpl.colors.LogNorm(vmin=np.min(self.tstep_data),
+                                      vmax=np.max(self.tstep_data))
+        else:
+            vmax = np.max(np.abs(self.tstep_data))
+            norm = mpl.colors.SymLogNorm(linthresh=vmax/1e2, vmin=-vmax, vmax=vmax)
+            cmap = cmr.holly
+
+        created_fig = ax is None
+        if created_fig:
+            plt.figure(figsize=(8,5))
+            ax = plt.gca()
+        ax.pcolormesh(self.O, self.T2, self.tstep_data, cmap=cmap, norm=norm, alpha=0.3)
+        ax.plot(self.omega_phi, self.max_angles % (2*np.pi), 'o', c='k', ms=5,
+                label='Max Amplitude Angles')
+        ax.plot(omega_fit, theta_fit % (2*np.pi), 'b-',
+                label='Linear Fit')
+        ax.axvline(self.omega_phi_fit[0], color='k', linestyle='--',
+                   label=f'Fitting bounds')
+        ax.axvline(self.omega_phi_fit[-1], color='k', linestyle='--')
+        ax.set_xlabel(r'$\Omega_\phi$', fontsize=14)
+        ax.set_ylabel(r'$\theta_{max}$', fontsize=14)
+        ax.set_title(f'Fitting the m={self.best_m} Macro Spiral, tfit={tfit:.2f} Gyr',
+                     fontsize=16)
+        ax.legend()
+        if created_fig:
+            if savefig:
+                plt.savefig(fig_dir + f'/macro_fit_t{int(tstep)}_{self.pc_string}.pdf')
+            plt.close()
+
     def make_rewind_dipole_fig(self, tstep, axs=None, savefig=False, fig_dir=None):
 
         tfit = self.derive_winding_time(tstep, threshold=np.pi/2)
-        if tfit == np.nan:
+        if np.isnan(tfit):
             print(f"Could not derive winding time for tstep {tstep}, \
                   skipping rewind dipole figure.")
             return
-        
+
         rad_mean_amp = np.mean(np.reshape(self.pc_rc[:,tstep], self.T.shape, 'F'), axis=0)
 
         _, vmax, linthresh = diagnostics.compute_pc_limits(self.pc_rc, self.T.shape)
 
-        cmap=cmr.holly
-        if axs==None:
-            fig, axs = plt.subplots(1, 2, figsize=(10, 5), 
+        cmap = cmr.holly
+        created_fig = axs is None
+        if created_fig:
+            fig, axs = plt.subplots(1, 2, figsize=(10, 5),
                                     subplot_kw={'projection': 'polar'})
-        
+        else:
+            fig = axs[0].get_figure()
+
         d_rot = (tfit * self.omega_phi)
-        
+
         #now interpolate at each radius so that I can use the same grid as before
-        interp = interp1d(self.tphi_c, self.pc_rc[:,tstep].reshape(self.T.T.shape), axis=1, 
+        interp = interp1d(self.tphi_c, self.pc_rc[:,tstep].reshape(self.T.T.shape), axis=1,
                                             fill_value="extrapolate")
         all_interp = interp((self.T+d_rot)%(2*np.pi))
         future_grid = np.diagonal(all_interp, axis1=0, axis2=2)
-        
+
         #plot what that timestep looks like after subtracting background
-        axs[0].pcolormesh(self.T, self.J, 
-                          np.reshape(self.pc_rc[:,tstep], self.T.shape, 'F') - rad_mean_amp, 
+        axs[0].pcolormesh(self.T, self.J,
+                          np.reshape(self.pc_rc[:,tstep], self.T.shape, 'F') - rad_mean_amp,
                           cmap=cmap, rasterized=True, shading='nearest',
                           norm=mpl.colors.SymLogNorm(linthresh=linthresh, vmax=vmax, vmin=-vmax))
 
-        im = axs[1].pcolormesh(self.T, self.J, future_grid - rad_mean_amp, 
+        im = axs[1].pcolormesh(self.T, self.J, future_grid - rad_mean_amp,
                                cmap=cmap, rasterized=True, shading='nearest',
                                norm=mpl.colors.SymLogNorm(linthresh=linthresh, vmax=vmax, vmin=-vmax))
-        
-        axs[0].set_title(f'Timestep {tstep}', pad=10, fontsize=14)
-        axs[1].set_title(f'Rewind {tfit} Gyr', 
+
+        axs[0].set_title(f'Time = {tstep*self.tstep_diff:.2f} Gyr', pad=10, fontsize=14)
+        axs[1].set_title(f'Rewind {np.around(tfit, decimals=2)} Gyr',
                          pad=10, fontsize=14)
-        
+
         for ax in axs:
-            ax.set_yticks([np.min(self.jphi_c), np.max(self.jphi_c)], 
+            ax.set_yticks([np.min(self.jphi_c), np.max(self.jphi_c)],
                           labels=[r'$J_\phi=1000$', r'$J_\phi=3000$'])
             ax.set_rmax(np.max(self.jphi_c))
-            ax.tick_params(left = False, right = False , labelleft = True ,
-                                labelbottom = False, bottom = False)      
+            ax.tick_params(left=False, right=False, labelleft=True,
+                           labelbottom=False, bottom=False)
             ax.grid(visible=False)
-        
-        fig.suptitle(f'Rewinding to dipole, {self.pc_string}', fontsize=16)
-        
-        fig.tight_layout()
-        
-        fig.subplots_adjust(right=0.88)
-        cbar_ax = fig.add_axes([0.94, 0.1, 0.015, 0.75])
-        cbar = fig.colorbar(im, cax=cbar_ax)
-        cbar.set_label('One Armed Phase Spiral Amplitude')
-        if savefig:
-            plt.savefig(fig_dir + f'/rewind_t{int(tstep)}_{self.pc_string}.pdf')
-        plt.close()
+
+        if created_fig:
+            fig.suptitle(f'Rewinding to dipole, {self.pc_string}', fontsize=16)
+            fig.tight_layout()
+            fig.subplots_adjust(right=0.88)
+            cbar_ax = fig.add_axes([0.94, 0.1, 0.015, 0.75])
+            cbar = fig.colorbar(im, cax=cbar_ax)
+            cbar.set_label('One Armed Phase Spiral Amplitude')
+            if savefig:
+                plt.savefig(fig_dir + f'/rewind_t{int(tstep)}_{self.pc_string}.pdf')
+            plt.close()
+        else:
+            fig.colorbar(im, ax=axs[1], label='One Armed Phase Spiral Amplitude',
+                         shrink=0.8)
 
     def fit_all_pc_macro_spirals(mssa, list_of_pc_lists, jphi_min, jbins, sim_name, channel_name, 
                              INDIVIDUAL_WINDING_DIR, DIPOLE_DIR, WINDING_DIR):

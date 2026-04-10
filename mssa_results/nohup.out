@@ -1,0 +1,24 @@
+Runs to execute: test_fiducial
+test_shorter40_200
+test_short_window
+test_shorter40_200_short_window
+B2_fiducial
+B2_short_window
+B2_first_passage
+B2_first_passage_short_window
+B2_second_passage
+B2_second_passage_short_window
+
+Starting: test_fiducial
+Runs to execute: test_fiducial
+test_shorter40_200
+test_short_window
+test_shorter40_200_short_window
+B2_fiducial
+B2_short_window
+B2_first_passage
+B2_first_passage_short_window
+B2_second_passage
+B2_second_passage_short_window
+
+Starting: test_fiducial

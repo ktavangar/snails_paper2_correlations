@@ -82,8 +82,8 @@ jbins=31
 list_of_pc_lists = [
     [0,1],[2],[3,4],[0,1,2],[0,1,2,3,4],
     [5,6,7],[8,9],[10,11],"12:19",
-    "0:8","0:12","0:19","5:12","5:19","12:19","12:43",
-    "19:39"
+    "0:8","0:12","0:19","0:39","5:12","5:19","12:19","12:43",
+    "12:39","19:43","19:39"
 ]
 
 
@@ -152,6 +152,13 @@ list_of_pc_lists = [
 ]
 
 
+
+
+
+#############################################
+## B2 SIMULATION RUNS: INNER VS OUTER DISK ##
+#############################################
+
 #[runs.B2_inner]
 #data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_B2/m1_amp_inner.dat"
 #sim_name     = "B2"
@@ -219,7 +226,7 @@ list_of_pc_lists = [
 #]
 
 
-#[runs.B2_second_passagee_outer]
+#[runs.B2_second_passage_outer]
 #data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_B2/m1_amp_second_passage_outer.dat"
 #sim_name     = "B2"
 #channel_name = "one-armed amplitude"

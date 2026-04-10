@@ -20,6 +20,10 @@ So the current technique is still useful for that analysis, but it may be missin
 I think this alternate binning is likely to be more impactful for pitch and phase angle correlations rather than amplitude. 
 It is hard to imagine how large scale features such as the halo would amplify or suppress phase spiral amplitude, especially since the number of stars in each bin would stay constant (by design). At least not in an oscillatory way.
 
+#### Another way to get around differential rotation
+
+Another way to get around the differential rotation problem when binning is to alter the lag coordinate in some way. Instead of time, one could use phase. Or we could be modifying the time or the region location based on the location in the disk. I think functionally this would have much the same effect as what we are doing above so I'm going to test that first and if it doesn't work we may have to explore other options.
+
 
 ### Interpretation of F and G Matrices
 
