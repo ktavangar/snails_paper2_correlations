@@ -18,8 +18,7 @@ srun python3 -m mpi4py.run -rc thread_level='funneled' \
     /mnt/home/ktavangar/projects/MSSA_Snails/code/make_lagrangian_table.py \
     --mpi \
     --ref-timestep 40 \
-    --data-file /../Kiyan-Single-Passage/full/Kiyan40.fits \
-    --action-file /../Kiyan-Single-Passage/full/Actions40.p \
+    --action-dir /../Kiyan-Single-Passage/full/ \
     --bin-index-file /savefilepath.npy \
     --sim 'test' \
     --cache_dir /dirpath/ \

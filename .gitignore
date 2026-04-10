@@ -47,6 +47,8 @@ snails-env/*
 *.log
 *.sql
 *.sqlite
+*.out
+
 
 # OS generated files #
 ######################
@@ -58,3 +60,6 @@ snails-env/*
 ehthumbs.db
 Thumbs.db
 
+# Folders #
+###########
+For_Jason/*

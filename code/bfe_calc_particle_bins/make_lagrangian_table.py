@@ -36,7 +36,7 @@ from mpi4py import MPI
 from schwimmbad.utils import batch_tasks
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
-from load_data import load_data_actions
+from load_actions import *
 from lagrangian_prep import LagrangianMSSATable
 
 
@@ -44,7 +44,7 @@ from lagrangian_prep import LagrangianMSSATable
 # MPI worker
 # ---------------------------------------------------------------------------
 
-def worker(batch, TableSetup, sim, bin_index_file):
+def worker(batch, TableSetup, sim, bin_index_file, action_dir):
     """Process one batch of timesteps on a single MPI rank."""
     (batch_id, _), tasks, cache_path = batch
     cache_file = cache_path / f'lagrangian_table_{batch_id:04d}.fits'
@@ -57,19 +57,12 @@ def worker(batch, TableSetup, sim, bin_index_file):
     rank = MPI.COMM_WORLD.Get_rank()
     t = TableSetup.create_empty_table()
 
-    # where do the action files live?
-    if (sim == 'live') | (sim == 'B2'):
-        data_root = '/mnt/ceph/users/jhunt/Bonsai/r2/B2/FlattenedDiscActions/'
-    elif sim == 'test':
-        data_root = '../Kiyan-Single-Passage/full/'
-    
-
     for timestep in tasks:
         if (sim == 'live') | (sim == 'B2'):
-            action_file = data_root + f'MedianFlattenedDiskActions{int(timestep)}.npy'
+            action_file = action_dir + f'MedianFlattenedDiskActions{int(timestep)}.npy'
         elif sim == 'test':
-            action_file = data_root + f'Actions{int(timestep)}.p'
-    
+            action_file = action_dir + f'Actions{int(timestep)}.p'
+
         print(f'Processing timestep {timestep} on rank {rank}', flush=True)
         new_t = TableSetup.fill_table(
             timestep,
@@ -103,7 +96,8 @@ def main(pool, args):
         partial(worker,
                 TableSetup=TableSetup,
                 sim=args.sim,
-                bin_index_file=args.bin_index_file),
+                bin_index_file=args.bin_index_file,
+                action_dir=args.action_dir),
         batched_tasks,
     ):
         pass
@@ -121,10 +115,8 @@ if __name__ == '__main__':
                         help='Assign particle indices to bins at the reference timestep and exit.')
     parser.add_argument('--ref-timestep', type=int, default=40,
                         help='Reference timestep for bin assignment (default: 40).')
-    parser.add_argument('--data-file',   default=None,
-                        help='FITS data file for the reference timestep.')
-    parser.add_argument('--action-file', default=None,
-                        help='Actions pickle for the reference timestep.')
+    parser.add_argument('--action-dir', default=None,
+                        help='Directory containing action files')
 
     # Shared
     parser.add_argument('--bin-index-file', required=True,
@@ -146,11 +138,13 @@ if __name__ == '__main__':
 
     # --- Step 1: assign bins ---
     if args.assign_bins:
-        if args.data_file is None or args.action_file is None:
-            parser.error('--assign-bins requires --data-file and --action-file.')
+        if args.action_dir is None:
+            parser.error('--assign-bins requires --action-dir.')
         print(f'Loading reference data (timestep {args.ref_timestep})...')
-        data_ref = load_data_actions(data_file=args.data_file,
-                                     action_file=args.action_file)
+        if args.sim == 'test':
+            data_ref = load_test_actions(tstep=args.ref_timestep, actions_dir=args.action_dir)
+        elif (args.sim == 'live') | (args.sim == 'B2'):
+            data_ref = load_B2_actions(tstep=args.ref_timestep, actions_dir=args.action_dir)
         LT = LagrangianMSSATable()
         LT.assign_bins(data_ref)
         LT.save_bin_indices(args.bin_index_file)
