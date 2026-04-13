@@ -24,6 +24,7 @@ jbins        = 26
 data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_Kiyan_test_t40-300/m1_amp_bins_j25_t16.dat"
 sim_name     = "test"
 channel_name = "one-armed amplitude"
+npc=100
 list_of_pc_lists = [
     [0],[0,1],[0,1,2,3],
     [2,3,4],[4,5],[6,7],[8,9],[10,11],
@@ -32,40 +33,40 @@ list_of_pc_lists = [
 ]
 
 
-[runs.test_shorter40_200]
-data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_Kiyan_test_t40-200/m1_amp_bins_j25_t16.dat"
-sim_name     = "test"
-channel_name = "one-armed amplitude"
-list_of_pc_lists = [
-    [0,1],[2,3],[4,5],[6,7],[8,9],[10,11],[20,21],
-    [2,3,4,5],
-    "0:6","0:10","0:20","6:20","10:20",
-    "22:32","22:44","22:50"
-]
+# [runs.test_shorter40_200]
+# data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_Kiyan_test_t40-200/m1_amp_bins_j25_t16.dat"
+# sim_name     = "test"
+# channel_name = "one-armed amplitude"
+# list_of_pc_lists = [
+#     [0,1],[2,3],[4,5],[6,7],[8,9],[10,11],[20,21],
+#     [2,3,4,5],
+#     "0:6","0:10","0:20","6:20","10:20",
+#     "22:32","22:44","22:50"
+# ]
 
 
-[runs.test_short_window]
-data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_Kiyan_test_t40-300/m1_amp_bins_j25_t16.dat"
-sim_name     = "test"
-channel_name = "one-armed amplitude"
-window_frac  = 0.25
-list_of_pc_lists = [
-    [0],[1,2],[0,1,2],"3:8",[0,5],"0:6",[6,7],[8,9],
-    "0:3","0:8","0:10","6:15","0:15","6:22","0:22","0:30",
-    "24:30","24:50","30:50"
-]
+# [runs.test_short_window]
+# data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_Kiyan_test_t40-300/m1_amp_bins_j25_t16.dat"
+# sim_name     = "test"
+# channel_name = "one-armed amplitude"
+# window_frac  = 0.25
+# list_of_pc_lists = [
+#     [0],[1,2],[0,1,2],"3:8",[0,5],"0:6",[6,7],[8,9],
+#     "0:3","0:8","0:10","6:15","0:15","6:22","0:22","0:30",
+#     "24:30","24:50","30:50"
+# ]
 
 
-[runs.test_shorter40_200_short_window]
-data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_Kiyan_test_t40-200/m1_amp_bins_j25_t16.dat"
-sim_name     = "test"
-channel_name = "one-armed amplitude"
-window_frac  = 0.25
-list_of_pc_lists = [
-    [0],[1,2],[0,1,2],[3,4],[5,6],[7,8,9],[10,11],[12,13],[14,15,16],
-    "0:5","0:7","0:14","0:17",
-    "1:7",[3,4,5,6],"7:14",[14,15,16,17],"17:31","31:40"
-]
+# [runs.test_shorter40_200_short_window]
+# data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_Kiyan_test_t40-200/m1_amp_bins_j25_t16.dat"
+# sim_name     = "test"
+# channel_name = "one-armed amplitude"
+# window_frac  = 0.25
+# list_of_pc_lists = [
+#     [0],[1,2],[0,1,2],[3,4],[5,6],[7,8,9],[10,11],[12,13],[14,15,16],
+#     "0:5","0:7","0:14","0:17",
+#     "1:7",[3,4,5,6],"7:14",[14,15,16,17],"17:31","31:40"
+# ]
 
 
 
@@ -73,18 +74,19 @@ list_of_pc_lists = [
 ## B2 SIMULATION RUNS ##
 ########################
 
-# [runs.B2_fiducial]
-# data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_B2/m1_amp_bins_j30_t16.dat"
-# sim_name     = "B2"
-# channel_name = "one-armed amplitude"
-# window_frac  = 0.5
-# jbins=31
-# list_of_pc_lists = [
-#     [0,1],[2],[3,4],[0,1,2],[0,1,2,3,4],
-#     [5,6,7],[8,9],[10,11],"12:19",
-#     "0:8","0:12","0:19","0:39","5:12","5:19","12:19","12:43",
-#     "12:39","19:43","19:39"
-# ]
+[runs.B2_fiducial]
+data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_B2/m1_amp_bins_j30_t16.dat"
+sim_name     = "B2"
+channel_name = "one-armed amplitude"
+window_frac  = 0.5
+jbins=31
+npc=100
+list_of_pc_lists = [
+    [0,1],[2],[3,4],[0,1,2],[0,1,2,3,4],
+    [5,6,7],[8,9],[10,11],"12:19",
+    "0:8","0:12","0:19","0:39","5:12","5:19","12:19","12:43",
+    "12:39","19:43","19:39"
+]
 
 
 # [runs.B2_short_window]
