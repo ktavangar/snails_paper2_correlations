@@ -22,3 +22,24 @@ B2_second_passage
 B2_second_passage_short_window
 
 Starting: test_fiducial
+Done:   test_fiducial
+Starting: test_shorter40_200
+Done:   test_shorter40_200
+Starting: test_short_window
+Done:   test_short_window
+Starting: test_shorter40_200_short_window
+Done:   test_shorter40_200_short_window
+Starting: B2_fiducial
+Done:   B2_fiducial
+Starting: B2_short_window
+Done:   B2_short_window
+Starting: B2_first_passage
+Done:   B2_first_passage
+Starting: B2_first_passage_short_window
+Done:   B2_first_passage_short_window
+Starting: B2_second_passage
+Done:   B2_second_passage
+Starting: B2_second_passage_short_window
+Done:   B2_second_passage_short_window
+
+All runs completed successfully.
