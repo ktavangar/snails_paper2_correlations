@@ -850,6 +850,121 @@ def plot_pc_time_series(mssa, times, fig_dir, n_pcs=20):
     print('Saved PC time series.')
 
 
+def plot_diagnostics_summary(mssa, ev, times, fig_dir, n_pcs=20, savefig=True):
+    """
+    Combined diagnostic figure with all four standard mSSA diagnostics as
+    sub-panels in a single figure.
+
+    Layout (3 rows × 3 columns, PC time series spans the full right column):
+
+        ┌──────────────┬──────────────┬──────────────────────┐
+        │ Eigenvalues  │  W-corr      │                      │
+        ├──────────────┴──────────────┤   PC time series     │
+        │        G matrix             │   (all rows)         │
+        ├─────────────────────────────┤                      │
+        │        F matrix             │                      │
+        └─────────────────────────────┴──────────────────────┘
+
+    Parameters
+    ----------
+    mssa    : pyEXP mSSA object
+        Must have already had mssa.reconstruct() called so that contrib() and
+        wCorrAll() are available (i.e. called after the full [0..npc]
+        reconstruction in the --diagnostics block).
+    ev      : array-like
+        Eigenvalue spectrum returned by mssa.eigenvalues().
+    times   : array-like
+        Simulation time array (from coefs.Times()).
+    fig_dir : str
+        Directory in which to save 'diagnostics_summary.pdf'.
+    n_pcs   : int
+        Number of PCs to show in the time-series panel (default 20).
+    savefig : bool
+        If True (default), save to fig_dir/diagnostics_summary.pdf.
+
+    Returns
+    -------
+    fig : matplotlib Figure
+        The composed figure object (useful for interactive inspection).
+    """
+    t_fmat, t_gmat = mssa.contrib()    # t1 = F matrix, t2 = G matrix
+    wcorr          = mssa.wCorrAll()
+    pc             = mssa.getPC()
+    lag_times      = times[:pc.shape[0]]
+
+    # ---- Figure layout -----------------------------------------------
+    # height_ratios: rows 0 (eigenvalues/wcorr) taller, rows 1-2 shorter
+    # for the wide-but-flat F/G matrices.
+    # width_ratios: cols 0-1 equal; col 2 (PC time series) slightly wider.
+    fig = plt.figure(figsize=(20, 14))
+    gs  = fig.add_gridspec(
+        3, 3,
+        height_ratios=[2, 1, 1],
+        width_ratios=[1, 1, 1.1],
+        hspace=0.2, wspace=0.3,
+        top=0.93,
+    )
+
+    ax_ev    = fig.add_subplot(gs[0, 0])        # top-left:  eigenvalues
+    ax_wcorr = fig.add_subplot(gs[0, 1])        # top-mid:   W-correlation
+    ax_pcts  = fig.add_subplot(gs[:, 2])        # right col: PC time series (all rows)
+    ax_gmat  = fig.add_subplot(gs[1, :2])       # mid row:   G matrix
+    ax_fmat  = fig.add_subplot(gs[2, :2])       # bot row:   F matrix
+
+    # ---- Eigenvalues -------------------------------------------------
+    ax_ev.semilogy(ev, '-o', ms=4)
+    ax_ev.set_xlabel('Index',      fontsize=14)
+    ax_ev.set_ylabel('Eigenvalue', fontsize=14)
+    ax_ev.set_title('PC Eigenvalues', fontsize=15)
+
+    # ---- W-correlation matrix ----------------------------------------
+    im_wc = ax_wcorr.imshow(wcorr, cmap='gray_r', aspect='auto')
+    ax_wcorr.set_xlabel('PC index', fontsize=12)
+    ax_wcorr.set_ylabel('PC index', fontsize=12)
+    ax_wcorr.set_title('W-Correlation Matrix', fontsize=15)
+    ax_wcorr.set_aspect('equal')
+    fig.colorbar(im_wc, ax=ax_wcorr, fraction=0.046, pad=0.04)
+
+    # ---- G and F contribution matrices --------------------------------
+    # Both share the same LogNorm so the colour scale is comparable.
+    # combined_max = max(t_gmat.max(), t_fmat.max())
+    fg_norm      = mpl.colors.LogNorm()#vmin=combined_max * 1e-4, vmax=combined_max)
+
+    im_g = ax_gmat.imshow(t_gmat, aspect='auto', norm=fg_norm, cmap=cmr.freeze)
+    ax_gmat.set_xlabel('Input Channel',      fontsize=12)
+    ax_gmat.set_ylabel('Principal Component', fontsize=12)
+    ax_gmat.set_title('G Matrix (grouping contribution)', fontsize=13)
+    fig.colorbar(im_g, ax=ax_gmat, fraction=0.03, pad=0.02)
+
+    im_f = ax_fmat.imshow(t_fmat, aspect='auto', norm=fg_norm, cmap=cmr.freeze)
+    ax_fmat.set_xlabel('Input Channel',      fontsize=12)
+    ax_fmat.set_ylabel('Principal Component', fontsize=12)
+    ax_fmat.set_title('F Matrix (forecasting contribution)', fontsize=13)
+    fig.colorbar(im_f, ax=ax_fmat, fraction=0.03, pad=0.02)
+
+    # ---- PC time series ----------------------------------------------
+    for i in range(n_pcs):
+        ax_pcts.plot(lag_times,
+                     pc[:, i] / np.max(np.abs(pc[:, i])) - 2 * i,
+                     lw=0.9, label=str(i))
+    ax_pcts.set_xlim(np.min(lag_times), np.max(lag_times))
+    ax_pcts.set_ylim(-2 * n_pcs, 6)
+    ax_pcts.set_xlabel('Time',                              fontsize=14)
+    ax_pcts.set_ylabel('Normalised PC amplitude (offset)',  fontsize=14)
+    ax_pcts.set_title(f'PC Time Series (first {n_pcs})',    fontsize=15)
+    ax_pcts.legend(loc='upper right', fontsize=12, ncol=4)
+
+    # ---- Finalise ----------------------------------------------------
+    fig.suptitle('mSSA Diagnostics Summary', fontsize=17, y=0.97)
+
+    if savefig:
+        out_path = os.path.join(fig_dir, 'diagnostics_summary.pdf')
+        fig.savefig(out_path, bbox_inches='tight')
+        print(f'Saved diagnostics summary to {out_path}')
+
+    return fig
+
+
 # ------------------------------------------------------------------
 # Convenience wrappers: batch movie generation
 # ------------------------------------------------------------------

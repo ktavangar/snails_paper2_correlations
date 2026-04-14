@@ -36,6 +36,7 @@ from mssa_viz import (
     RewindMacroSpiral,
     compute_data_limits,
     plot_eigenvalues, plot_fg_matrices, plot_wcorr, plot_pc_time_series,
+    plot_diagnostics_summary,
 )
 
 
@@ -133,8 +134,9 @@ if args.diagnostics:
     # mssa.contrib() (F/G matrices) and mssa.wCorrAll() (W-correlation).
     coefs.zerodata()
     mssa.reconstruct([*range(npc)])
-    
-    plot_eigenvalues(ev, FIG_DIR)
+
+    plot_diagnostics_summary(mssa, ev, times, FIG_DIR)   # combined single-figure version
+    plot_eigenvalues(ev, FIG_DIR)                         # individual figures kept for detail
     plot_fg_matrices(mssa, FIG_DIR)
     plot_wcorr(mssa, FIG_DIR)
     plot_pc_time_series(mssa, times, FIG_DIR)
