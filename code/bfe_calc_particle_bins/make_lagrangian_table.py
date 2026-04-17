@@ -78,7 +78,10 @@ def worker(batch, TableSetup, sim, bin_index_file, action_dir):
 # ---------------------------------------------------------------------------
 
 def main(pool, args):
-    TableSetup = LagrangianMSSATable()
+    if args.sim == 'test':
+        TableSetup = LagrangianMSSATable(jphi_bounds=[1000, 3500], nphi_bins=[25, 16])
+    elif (args.sim == 'live') | (args.sim == 'B2'):
+        TableSetup = LagrangianMSSATable(jphi_bounds=[1000, 4000], nphi_bins=[30, 16])
     cache_path = pathlib.Path(args.cache_dir)
     cache_path.mkdir(exist_ok=True)
 
@@ -141,9 +144,11 @@ if __name__ == '__main__':
         print(f'Loading reference data (timestep {args.ref_timestep})...')
         if args.sim == 'test':
             data_ref = load_test_actions(tstep=args.ref_timestep, actions_dir=args.action_dir)
+            LT = LagrangianMSSATable(jphi_bounds=[1000, 3500], nphi_bins=[25, 16])
         elif (args.sim == 'live') | (args.sim == 'B2'):
             data_ref = load_B2_actions(tstep=args.ref_timestep, actions_dir=args.action_dir)
-        LT = LagrangianMSSATable()
+            LT = LagrangianMSSATable(jphi_bounds=[1000, 4000], nphi_bins=[30, 16])
+        
         LT.assign_bins(data_ref)
         LT.save_bin_indices(args.bin_index_file)
         print('Bin Indices saved')
