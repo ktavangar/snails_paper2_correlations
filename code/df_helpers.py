@@ -458,7 +458,7 @@ class LaguerreSnails:
         try:
             (self.pitch_angle, phase), _ = curve_fit(get_values, cut_jz[ind_for_fit], cut_peaks[ind_for_fit], 
                                                 p0=[-0.1, 20], bounds=[[-np.pi/2, -100], [0, 1000]], 
-                                                loss='cauchy')[0]
+                                                loss='cauchy')
             self.phase_angle = phase % (2*np.pi)
             
         except: # if calculation doesn't work, set pitch angle=0 and phase angle=pi
