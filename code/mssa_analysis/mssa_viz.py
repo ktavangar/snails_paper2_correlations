@@ -541,21 +541,26 @@ class RewindMacroSpiral(PhaseSpaceGrid):
 
         created_fig = ax is None
         if created_fig:
-            plt.figure(figsize=(5, 5))
+            plt.figure(figsize=(6, 6), constrained_layout=True)
             ax = plt.gca()
 
         t_axis = np.arange(ntimes) * self.tstep_diff
         t_end  = ntimes * self.tstep_diff
         ax.plot(t_axis, tfits, 'o', c='blue', ms=2, label='Fitted Winding Time')
-        ax.plot([0, t_end], [0, t_end], 'k--', label='t_fit = t')
+        ax.plot([0, 1.5*t_end], [0, 1.5*t_end], 'k--', label='"Correct" Winding Time')
         ax.set_xlabel('Simulation Time (Gyr)', fontsize=14)
         ax.set_ylabel('Winding Time (Gyr)',    fontsize=14)
-        ax.set_title(f'{self.sim_name} {self.channel_name} tfit for {self.pc_string}',
-                     fontsize=16)
+        if self.sim_name == 'test' and self.pc_string == 'data':
+            ax.set_title(f'Test Particle Macro-spiral Winding', fontsize=16)
+        elif (self.sim_name == 'B2' or self.sim_name == 'live') and self.pc_string == 'data':
+            ax.set_title(f'N-body Macro-spiral Winding', fontsize=16)
+        else:
+            ax.set_title(f'{self.sim_name} {self.channel_name} tfit for {self.pc_string}',
+                        fontsize=16)
         ax.set_aspect('equal')
-        ax.set_xlim(0, t_end)
-        ax.set_ylim(0, 3.5)
-        ax.legend()
+        ax.set_xlim(0, np.max([np.min([1.25*t_end, 1.05*np.nanmax(tfits)]), t_end]))
+        ax.set_ylim(0, np.max([np.min([1.25*t_end, 1.05*np.nanmax(tfits)]), t_end]))
+        ax.legend(loc='upper left')
 
         if savefig:
             plt.savefig(os.path.join(fig_dir, f'winding_times_{self.pc_string}.pdf'))
@@ -590,7 +595,7 @@ class RewindMacroSpiral(PhaseSpaceGrid):
 
         created_fig = ax is None
         if created_fig:
-            plt.figure(figsize=(8, 5))
+            plt.figure(figsize=(8, 5), constrained_layout=True)
             ax = plt.gca()
 
         ax.pcolormesh(self.O, self.T2, self.tstep_data, cmap=cmap, norm=norm, alpha=0.3)
@@ -610,6 +615,7 @@ class RewindMacroSpiral(PhaseSpaceGrid):
                 plt.savefig(os.path.join(fig_dir,
                                           f'macro_fit_t{int(tstep)}_{self.pc_string}.pdf'))
             plt.close()
+
 
     def make_rewind_dipole_fig(self, tstep, axs=None, savefig=False, fig_dir=None):
         """

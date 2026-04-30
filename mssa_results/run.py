@@ -87,6 +87,8 @@ FIG_DIR, INDIVIDUAL_WINDING_DIR, MOVIES_DIR, WINDING_DIR = make_dirs(FIG_DIR)
 
 print(f"Run: {args.run_name}")
 
+
+threshold = np.pi/2
 ###############################
 ## Fitting Data Macro-Spiral ##
 ###############################
@@ -94,12 +96,19 @@ if args.data_macro_fitting:
     data_ = np.loadtxt(data_file)
     data = data_[:, 1:].T # convert to right shape (channels x time) and drop time column
     DataMacroFitting = RewindMacroSpiral(data, None, jphi_min, jbins, sim_name, channel_name, m=1)
-    DataMacroFitting.plot_macro_tfit_over_time(threshold=np.pi/2, savefig=True, fig_dir=WINDING_DIR)
+    DataMacroFitting.plot_macro_tfit_over_time(threshold=threshold, savefig=True, fig_dir=WINDING_DIR)
     DATA_WINDING_DIR = os.path.join(INDIVIDUAL_WINDING_DIR, 'data')
     os.makedirs(DATA_WINDING_DIR, exist_ok=True)
 
     for tstep_ind in range(data.shape[1]):
-        DataMacroFitting.plot_fit_and_dipole(tstep_ind, threshold=np.pi/2, savefig=True, fig_dir=DATA_WINDING_DIR)
+        DataMacroFitting.plot_fit_and_dipole(tstep_ind, threshold=threshold, savefig=True, fig_dir=DATA_WINDING_DIR)
+
+
+#####################
+## Make Data Plots ##
+#####################
+
+
 
 #####################################
 ## Run M-SSA and Quick Diagnostics ##
@@ -176,12 +185,12 @@ if args.macro_fitting or args.movies:
         if args.macro_fitting:
             MS = RewindMacroSpiral(pc_rc, pc_list, jphi_min, jbins,
                                    sim_name, channel_name, m=1)
-            MS.plot_macro_tfit_over_time(threshold=np.pi/2,
+            MS.plot_macro_tfit_over_time(threshold=threshold,
                                          savefig=True, fig_dir=WINDING_DIR)
             PC_WINDING_DIR = os.path.join(INDIVIDUAL_WINDING_DIR, MS.pc_string)
             os.makedirs(PC_WINDING_DIR, exist_ok=True)
             for tstep in range(pc_rc.shape[1]):
-                MS.plot_fit_and_dipole(tstep, threshold=np.pi/2,
+                MS.plot_fit_and_dipole(tstep, threshold=threshold,
                                        savefig=True, fig_dir=PC_WINDING_DIR)
 
         # --- Movies (reuse the reconstruction computed above) ---

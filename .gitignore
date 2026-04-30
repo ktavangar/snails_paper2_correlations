@@ -8,6 +8,8 @@
 *.pkl
 *.txt
 *.kmeans
+*.h5
+*.hdf5
 
 #Figures
 *.pdf
