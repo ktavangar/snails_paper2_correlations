@@ -32,6 +32,18 @@ jbins        = 26
 #     "19:48","19:66", "47:66", "34:66", "34:48"
 # ]
 
+[runs.test_fiducial_ratio]
+data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_Kiyan_test_t40-300/m1m0_amp_ratio_bins_j25_t16.dat"
+sim_name     = "test"
+channel_name = "one-armed amplitude"
+list_of_pc_lists = [
+#     # [0],[0,1],[0,1,2,3],
+#     # [2,3,4],[4,5],[6,7],[8,9],[10,11],
+#     # "4:12","4:21","12:21","21:33","33:50","21:50",
+#     # "0:12","0:21", 
+#     "19:48","19:66", "47:66", "34:66", "34:48"
+]
+
 
 # [runs.test_shorter40_200]
 # data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_Kiyan_test_t40-200/m1_amp_bins_j25_t16.dat"
@@ -74,17 +86,30 @@ jbins        = 26
 ## B2 SIMULATION REGION BINNING ##
 ##################################
 
-[runs.B2_fiducial]
-data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_B2/m1_amp_bins_j30_t16.dat"
+# [runs.B2_fiducial]
+# data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_B2/m1_amp_bins_j30_t16.dat"
+# sim_name     = "B2"
+# channel_name = "one-armed amplitude"
+# window_frac  = 0.5
+# jbins=31
+# list_of_pc_lists = [
+#     [0,1],[2],[3,4],[0,1,2],[0,1,2,3,4],
+#     [5,6,7],[8,9],[10,11],"12:19",
+#     "0:8","0:12","0:19","0:39","5:12","5:19","12:19","12:43",
+#     "12:39","19:43","19:39"
+# ]
+
+[runs.B2_fiducial_ratio]
+data_file  = "/Users/Tavangar/Work/EXP_Projects/paper2_correlations/data/mSSA_channels_B2/m1m0_amp_ratio_bins_j30_t16.dat"
 sim_name     = "B2"
 channel_name = "one-armed amplitude"
 window_frac  = 0.5
 jbins=31
 list_of_pc_lists = [
-    [0,1],[2],[3,4],[0,1,2],[0,1,2,3,4],
-    [5,6,7],[8,9],[10,11],"12:19",
-    "0:8","0:12","0:19","0:39","5:12","5:19","12:19","12:43",
-    "12:39","19:43","19:39"
+    # [0,1],[2],[3,4],[0,1,2],[0,1,2,3,4],
+    # [5,6,7],[8,9],[10,11],"12:19",
+    # "0:8","0:12","0:19","0:39","5:12","5:19","12:19","12:43",
+    # "12:39","19:43","19:39"
 ]
 
 
