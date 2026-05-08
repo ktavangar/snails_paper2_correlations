@@ -23,9 +23,10 @@ def select_action_region(data, center, radius):
 
 class LaguerreSnails:
     '''
+    THIS HAS SIGNIFICANT DIFFERENCES FROM THE ONE USED ON THE SIMULATION
     Class to create and create the BFE reconstruction of a phase-spiral 
     '''
-    def __init__(self, data, center, radius, Jz_grid, thetaz_grid, m_max, n_max, time=None):
+    def __init__(self, data, Jz_grid, thetaz_grid, m_max, n_max, time=None):
         '''
         Initialize the class
 
@@ -33,10 +34,6 @@ class LaguerreSnails:
         -------------------------------
         data        : (pandas df) Input data
                                   Include at least columns ['jphi', 'jz', 'theta_phi', 'theta_z']
-        center      : (tuple) Center of the disk region where we want a BFE reconstruction
-                              [J_phi, theta_phi] in [kpc km/s, radians]
-        radius      : (tuple) Half the side length of the RECTANGULAR disk region 
-                              [J_phi radius, theta_phi radius] in [kpc km/s, radians]
         Jz_grid     : (array) Array of vertical actions at which to calculate the BFE
         thetaz_grid : (array) Array of vertical angles at which to calculate the BFE
         m_max       : (integer) The maximum mode of the Fourier component to generate
@@ -45,7 +42,6 @@ class LaguerreSnails:
         '''
         self.data = data
         self.time = time
-        self.center, self.radius = center, radius
         self.Jz_grid, self.thetaz_grid = Jz_grid, thetaz_grid
 
         # We will plot sqrt(J_z)sin(theta_z) vs sqrt(J_z)cos(theta_z) to make a spiral
@@ -64,7 +60,7 @@ class LaguerreSnails:
        
         #print('Selecting Region...')
         ## Create a data table for just the region of interest
-        self.sel = select_action_region(data, center, radius)
+        self.sel = self.data
 
         #calculate best fit value of a for disk_laguerre
         # Laguerre polynomials include a variable factor "a"
