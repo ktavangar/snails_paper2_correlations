@@ -100,22 +100,31 @@ class LaguerreSnails:
     #     r = Jzs * np.exp(-k*thetas) + b
 
     
-    def get_coeffs(self, std=False):
+    def get_coeffs(self, S_per_star=None, S_floor=0.05, std=False):
         '''
         Generate the coefficients for the BFE
         '''
         self.coeffs = np.zeros((self.m_max,self.n_max), dtype=np.complex128)      #coefficient array
         if std:
             self.coeffs_std = np.zeros((self.m_max, self.n_max), dtype=np.complex128) #coefficient error array
+
+        # Per-star IPW weights
+        if S_per_star is None:
+            w = np.ones(len(self.sel))                 # naive (biased) sum
+        else:
+            S_ = np.asarray(S_per_star)
+            # mask = (S_ >= S_floor) & np.isfinite(S_) & np.isfinite(self.sel.jz) & np.isfinite(self.sel.theta_z)
+            # S = S_[mask]
+            w = 1/S_
         
         #calculate coefficients
         #print('Calculating coefficients...')
         exp_m = [np.exp(1j * m * self.sel.theta_z) for m in range(self.m_max)]
         for m, n in product(range(self.m_max), range(self.n_max)):
-            coeff = self.n_m(m) * np.sum(self.disk_lag(n, self.sel.jz, self.a) * exp_m[m] * self.sel.jz)
+            coeff = self.n_m(m) * np.sum(w * self.disk_lag(n, self.sel.jz, self.a) * exp_m[m] * self.sel.jz)
             self.coeffs[m, n] = coeff
             if std:
-                self.coeffs_std[m, n] = np.sqrt(self.n_m(m) * np.sum((self.disk_lag(n, self.sel.jz, self.a) * \
+                self.coeffs_std[m, n] = np.sqrt(w * self.n_m(m) * np.sum((self.disk_lag(n, self.sel.jz, self.a) * \
                                                                 np.exp(1j*m*self.sel.theta_z) * self.sel.jz - \
                                                                 coeff/len(self.sel))**2))
         return self.coeffs

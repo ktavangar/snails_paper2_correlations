@@ -132,7 +132,7 @@ class MakeAnimations(PhaseSpaceGrid):
     def _style_polar_ax(self, ax):
         ax.set_yticks(
             [np.min(self.jphi_c), np.max(self.jphi_c)],
-            labels=[r'$J_\phi=1000$', r'$J_\phi=4000$'],
+            labels=[r'$J_\phi={}$'.format(int(np.min(self.jphi_c))), r'$J_\phi={}$'.format(int(np.max(self.jphi_c)))],
             fontsize=18, color='k',
         )
         ax.set_rmax(np.max(self.jphi_c))
