@@ -139,23 +139,51 @@ def plot_spiral_panels(residual_list, n_phi, n_R, xedges, yedges, colorbarlim,
 def plot_amplitude_maps(RG_mesh, Theta_phi_mesh, m0_amp_all, m1_amp_all, m2_amp_all):
     m1m2_amp_max = np.maximum(m1_amp_all, m2_amp_all)
     vmin, vmax = 0.05, 0.7
+    norm = mpl.colors.LogNorm(vmin=vmin, vmax=vmax)
 
-    fig, axes = plt.subplots(1, 4, figsize=(16, 4), constrained_layout=True)
-    ax1, ax2, ax3, ax4 = axes
-    ax1.pcolormesh(RG_mesh, Theta_phi_mesh, m1_amp_all / m0_amp_all,
-                   cmap=cmr.chroma, norm=mpl.colors.LogNorm(vmin=vmin, vmax=vmax))
-    ax2.pcolormesh(RG_mesh, Theta_phi_mesh, m2_amp_all / m0_amp_all,
-                   cmap=cmr.chroma, norm=mpl.colors.LogNorm(vmin=vmin, vmax=vmax))
-    ax3.pcolormesh(RG_mesh, Theta_phi_mesh, (m1_amp_all + m2_amp_all) / m0_amp_all,
-                   cmap=cmr.chroma, norm=mpl.colors.LogNorm(vmin=vmin, vmax=vmax))
-    im = ax4.pcolormesh(RG_mesh, Theta_phi_mesh, m1m2_amp_max / m0_amp_all,
-                        cmap=cmr.chroma, norm=mpl.colors.LogNorm(vmin=vmin, vmax=vmax))
-    for ax, title in zip(axes, ["m=1 Amplitude Ratio", "m=2 Amplitude Ratio",
-                                 "Sum(m=1,m=2) Amplitude Ratio", "Max(m=1,m=2) Amplitude Ratio"]):
-        ax.set_title(title)
-        ax.set_xlabel(r"Guiding Radius $R_g$ [kpc]")
-    ax1.set_ylabel(r"$\Theta_\phi$ [radians]")
-    fig.colorbar(im, label="Amplitude Ratio")
+    Rg_centers = RG_mesh[0, :]  # one value per R_g column
+
+    ratios = [
+        m1_amp_all / m0_amp_all,
+        m2_amp_all / m0_amp_all,
+        (m1_amp_all + m2_amp_all) / m0_amp_all,
+        m1m2_amp_max / m0_amp_all,
+    ]
+    titles = [
+        "m=1 Amplitude Ratio",
+        "m=2 Amplitude Ratio",
+        "Sum(m=1,m=2) Amplitude Ratio",
+        "Max(m=1,m=2) Amplitude Ratio",
+    ]
+
+    fig = plt.figure(figsize=(16, 6), constrained_layout=True)
+    gs = fig.add_gridspec(2, 4, height_ratios=[1, 2])
+
+    top_axes = [fig.add_subplot(gs[0, k]) for k in range(4)]
+    bot_axes = [fig.add_subplot(gs[1, k]) for k in range(4)]
+
+    # Share x-axis between the top and bottom panel of each column
+    for tax, bax in zip(top_axes, bot_axes):
+        tax.sharex(bax)
+
+    for k, (ratio, title, tax, bax) in enumerate(zip(ratios, titles, top_axes, bot_axes)):
+        # Top panel: mean over theta_phi bins at each R_g
+        mean_ratio = np.nanmean(ratio, axis=0)
+        tax.plot(Rg_centers, mean_ratio, color="k", lw=1.5)
+        tax.set_yscale("log")
+        tax.set_ylim(vmin, vmax)
+        tax.set_title(title)
+        plt.setp(tax.get_xticklabels(), visible=False)
+        if k == 0:
+            tax.set_ylabel("Mean ratio")
+
+        # Bottom panel: 2D amplitude map
+        im = bax.pcolormesh(RG_mesh, Theta_phi_mesh, ratio, cmap=cmr.chroma, norm=norm)
+        bax.set_xlabel(r"Guiding Radius $R_g$ [kpc]")
+        if k == 0:
+            bax.set_ylabel(r"$\Theta_\phi$ [radians]")
+
+    fig.colorbar(im, ax=bot_axes, label="Amplitude Ratio")
     plt.savefig("Gaia_m1_m2_amplitude_ratios.pdf", dpi=300)
     plt.show()
 
