@@ -69,7 +69,7 @@ def main():
     plt.xlabel(r"$\phi$ [rad]")
     plt.title(r"Azimuthal angle $\phi$ distribution")
     plt.tight_layout()
-    plt.savefig("hist_phi.pdf", dpi=150)
+    plt.savefig("figres/hist_phi.pdf", dpi=150)
     plt.show()
 
     # --- Filter NaN ---
@@ -172,7 +172,7 @@ def main():
             ax.scatter(0, 0, color="cyan", s=10)
     fig.supxlabel("R (kpc)", fontsize=16)
     fig.supylabel(r"$\phi$ [rad]", fontsize=16)
-    plt.savefig("spirals_r_phi.pdf", dpi=150)
+    plt.savefig("figures/spirals_r_phi.pdf", dpi=150)
     plt.show()
 
     # --- Pass 2: LaguerreSnails decomposition ---
@@ -209,6 +209,7 @@ def main():
             theta_z_bin = theta_z[bin_mask]
             R_bin = R[bin_mask]
             phi_bin = phi[bin_mask]
+            S_bin = S[bin_mask]
 
             jx_bin = np.sqrt(Jz_bin) * np.cos(theta_z_bin)
             jy_bin = np.sqrt(Jz_bin) * np.sin(theta_z_bin)
@@ -245,7 +246,7 @@ def main():
                 a_all[i, j] = np.nan
                 continue
 
-            lss.get_coeffs()
+            lss.get_coeffs(S_per_star=S_bin)
             m0_amp_all[i, j] = np.linalg.norm(np.abs(lss.coeffs[0]))
             m1_amp_all[i, j] = np.linalg.norm(np.abs(lss.coeffs[1]))
             m2_amp_all[i, j] = np.linalg.norm(np.abs(lss.coeffs[2]))
@@ -288,8 +289,7 @@ def main():
             axes[i, j].pcolormesh(x_edges, y_edges, data.T, cmap=cmr.prinsenvlag, shading="auto", rasterized=True)
     fig.supxlabel("R (kpc)", fontsize=16)
     fig.supylabel(r"$\phi$ [rad]", fontsize=16)
-    plt.savefig("recon_m1_r_phi.pdf", dpi=150)
-    plt.show()
+    plt.savefig("figures/recon_m1_r_phi.pdf", dpi=150)
 
     # --- Amplitude maps ---
     R_mesh, phi_mesh = np.meshgrid(R_bins[:-1] + 0.2, phi_bins[:-1] + 0.05)
@@ -312,38 +312,36 @@ def main():
         ax.set_xlabel(r"$R$ [kpc]")
     ax1.set_ylabel(r"$\phi$ [radians]")
     fig.colorbar(im, label="Amplitude Ratio")
-    plt.savefig("Gaia_m1_m2_amplitude_ratios_r_phi.pdf", dpi=300)
-    plt.show()
+    plt.savefig("figures/Gaia_m1_m2_amplitude_ratios_r_phi.pdf", dpi=300)
 
     # --- Norm maps ---
+    xgrid = np.arange(-lss.rootjzmax, lss.rootjzmax + 1e-5, lss.rootjzstep)
+    ygrid = np.arange(-lss.rootjzmax, lss.rootjzmax + 1e-5, lss.rootjzstep)
+    X_grid, Y_grid = np.meshgrid(xgrid, ygrid)
+    good_inds = np.array(np.where(X_grid**2 + Y_grid**2 > 2)).T
     total_norm = np.zeros((n_phi, n_R))
-    central_area_norm = np.zeros((n_phi, n_R))
     subset_norm = np.zeros((n_phi, n_R))
     for i in range(n_phi):
         for j in range(n_R):
-            total_norm[i, j] = np.linalg.norm(recon_m1[i, j])
-            central_area_norm[i, j] = np.linalg.norm(recon_m1[i, j][40:60, 40:60])
-            subset_norm[i, j] = total_norm[i, j] - central_area_norm[i, j]
+            ratio = recon_m1[i, j] / recon_m0[i, j]
+            total_norm[i, j] = np.linalg.norm(ratio)
+            subset_norm[i, j] = np.linalg.norm(ratio[good_inds[:, 0], good_inds[:, 1]])
 
-    plt.figure(figsize=(6, 5))
-    plt.pcolormesh(R_mesh, phi_mesh, total_norm, norm=mpl.colors.LogNorm(), cmap=cmr.chroma)
-    plt.xlabel(r"$R$ [kpc]")
-    plt.ylabel(r"$\phi$ [rad]")
-    plt.title("m=1 Norm (total)")
-    plt.colorbar()
-    plt.tight_layout()
-    plt.savefig("norm_m1_total_r_phi.pdf", dpi=150)
-    plt.show()
+    fig, ax = plt.subplots(1, 1, figsize=(4, 4), constrained_layout=True)
+    im = ax.pcolormesh(R_mesh, phi_mesh, total_norm, cmap=cmr.chroma, norm=mpl.colors.LogNorm())
+    ax.set_title("Norm of m=1 Reconstruction Ratio")
+    fig.colorbar(im, label="Amplitude")
+    ax.set_xlabel(r"$R$ [kpc]")
+    ax.set_ylabel(r"$\phi$ [radians]")
+    plt.savefig("figures/norm_m1_total_r_phi.pdf", dpi=150)
 
-    plt.figure(figsize=(6, 5))
-    plt.pcolormesh(R_mesh, phi_mesh, subset_norm, norm=mpl.colors.LogNorm(), cmap=cmr.chroma)
-    plt.xlabel(r"$R$ [kpc]")
-    plt.ylabel(r"$\phi$ [rad]")
-    plt.title("m=1 Norm (excl. central area)")
-    plt.colorbar()
-    plt.tight_layout()
-    plt.savefig("norm_m1_subset_r_phi.pdf", dpi=150)
-    plt.show()
+    fig, ax = plt.subplots(1, 1, figsize=(4, 4), constrained_layout=True)
+    im = ax.pcolormesh(R_mesh, phi_mesh, subset_norm, cmap=cmr.chroma, norm=mpl.colors.LogNorm())
+    ax.set_title("Norm of m=1 Reconstruction Ratio (excl. central area)")
+    fig.colorbar(im, label="Amplitude")
+    ax.set_xlabel(r"$R$ [kpc]")
+    ax.set_ylabel(r"$\phi$ [radians]")
+    plt.savefig("figures/norm_m1_subset_r_phi.pdf", dpi=150)
 
     print("All done.")
 

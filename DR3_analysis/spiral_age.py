@@ -68,15 +68,14 @@ _KPC_PER_KMS_TO_GYR = 3.0857e16 / 3.1558e16
 
 def rotation_curve_from_agama(potential, R_kpc, n_grid=5000):
     """Return V_c (km/s) at each radius in R_kpc using an AGAMA potential."""
-    import agama
-    agama.setUnits(mass=1.0, length=1.0, velocity=1.0)
+    
 
-    R_grid = np.linspace(max(0.1, 0.5 * R_kpc.min()), 1.5 * R_kpc.max() + 5, n_grid)
-    dR = 1e-3
-    Vc_grid = np.array([
-        np.sqrt(Ri * (potential.potential(Ri + dR, 0, 0) - potential.potential(Ri - dR, 0, 0)) / (2 * dR))
-        for Ri in R_grid
-    ])
+    R_grid = np.linspace(0.1, 30, n_grid)
+    dR = 1e-2
+    Vc_grid = np.zeros_like(R_grid)
+    for i, Ri in enumerate(R_grid):
+        dPhi_dR = (potential.potential(Ri + dR, 0, 0) - potential.potential(Ri - dR, 0, 0)) / (2 * dR)
+        Vc_grid[i] = np.sqrt(Ri * dPhi_dR)
     interp = interp1d(R_grid, Vc_grid, kind="cubic", fill_value="extrapolate")
     return interp(R_kpc)
 
@@ -184,39 +183,38 @@ def plot_summary(R_kpc, Vc_kms, pairwise_ages, absolute_ages,
 
     # Left: rotation curve
     if R_grid is not None and Vc_grid is not None:
-        ax_rc.plot(R_grid, Vc_grid, color="steelblue", lw=2, label=r"$V_c(R)$")
+        ax_rc.plot(R_grid, Vc_grid, color="steelblue", lw=2)#, label=r"$V_c(R)$")
     ax_rc.scatter(R_kpc, Vc_kms, color="crimson", zorder=5,
                   s=80, label="Crossing radii")
     for Ri, Vci in zip(R_kpc, Vc_kms):
         ax_rc.axvline(Ri, color="crimson", lw=0.8, ls="--", alpha=0.5)
-    ax_rc.set_xlabel(r"$R$ [kpc]")
-    ax_rc.set_ylabel(r"$V_c$ [km s$^{-1}$]")
+    # ax_rc.set_xlabel(r"$R$ [kpc]")
+    # ax_rc.set_ylabel(r"$V_c$ [km s$^{-1}$]")
     ax_rc.set_title("Rotation curve")
     ax_rc.legend()
 
     # Right: age estimates as a bar chart
-    all_ages = pairwise_ages + absolute_ages
-    labels = [lbl.split("(")[0].strip() for lbl, _ in all_ages]
-    ages = [T for _, T in all_ages]
-    colors = ["steelblue"] * len(pairwise_ages) + ["seagreen"] * len(absolute_ages)
+    # all_ages = pairwise_ages + absolute_ages
+    # # labels = [lbl.split("(")[0].strip() for lbl, _ in all_ages]
+    # ages = [T for _, T in all_ages]
+    # colors = ["steelblue"] * len(pairwise_ages) + ["seagreen"] * len(absolute_ages)
 
-    y = np.arange(len(ages))
-    ax_age.barh(y, ages, color=colors, edgecolor="k", lw=0.6)
-    ax_age.set_yticks(y)
-    ax_age.set_yticklabels(labels, fontsize=8)
-    ax_age.axvline(np.mean(ages), color="crimson", lw=1.5, ls="--", label="Mean")
-    ax_age.set_xlabel("Age [Gyr]")
-    ax_age.set_title("Age estimates")
-    ax_age.legend(fontsize=8)
+    # y = np.arange(len(ages))
+    # ax_age.barh(y, ages, color=colors, edgecolor="k", lw=0.6)
+    # ax_age.set_yticks(y)
+    # # ax_age.set_yticklabels(labels, fontsize=8)
+    # ax_age.axvline(np.mean(ages), color="crimson", lw=1.5, ls="--", label="Mean")
+    # ax_age.set_xlabel("Age [Gyr]")
+    # ax_age.set_title("Age estimates")
+    # ax_age.legend(fontsize=8)
 
-    # Legend for bar colours
-    from matplotlib.patches import Patch
-    handles = [Patch(facecolor="steelblue", label="Pairwise (Δk)"),
-               Patch(facecolor="seagreen", label="Absolute (k)")]
-    ax_age.legend(handles=handles, fontsize=8, loc="lower right")
-
-    plt.savefig("spiral_age.pdf", dpi=150)
-    plt.show()
+    # # Legend for bar colours
+    # from matplotlib.patches import Patch
+    # handles = [Patch(facecolor="steelblue", label="Pairwise (Δk)"),
+    #            Patch(facecolor="seagreen", label="Absolute (k)")]
+    # ax_age.legend(handles=handles, fontsize=8, loc="lower right")
+    plt.savefig("figures/spiral_age.pdf", dpi=150)
+    
 
 
 def main():
@@ -231,9 +229,10 @@ def main():
              "(list two or more, will be sorted ascending).",
     )
 
-    vc_group = parser.add_mutually_exclusive_group(required=True)
+    vc_group = parser.add_mutually_exclusive_group(required=False)
     vc_group.add_argument(
         "--potential", metavar="PATH",
+        default="/Users/Tavangar/Work/packages/Agama/data/PriceWhelan22.ini",
         help="AGAMA potential .ini file used to compute the rotation curve.",
     )
     vc_group.add_argument(
@@ -291,13 +290,17 @@ def main():
     if args.potential is not None:
         try:
             import agama
+            agama.setUnits(mass=1.0, length=1.0, velocity=1.0)
         except ImportError:
             sys.exit("agama is not installed; use --vc-file or --vc-values instead.")
+
         potential = agama.Potential(args.potential)
         Vc_kms = rotation_curve_from_agama(potential, R_kpc)
+        print(Vc_kms)
         if args.plot:
             R_grid = np.linspace(0.5, max(R_kpc) * 1.5 + 3, 500)
             Vc_grid = rotation_curve_from_agama(potential, R_grid)
+            plot_summary(R_kpc, Vc_kms, [], [], R_grid, Vc_grid)  # just to show the curve
 
     elif args.vc_file is not None:
         Vc_kms = rotation_curve_from_file(args.vc_file, R_kpc)

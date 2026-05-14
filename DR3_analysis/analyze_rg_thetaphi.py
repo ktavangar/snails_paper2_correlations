@@ -82,7 +82,7 @@ def compute_guiding_radius(potential, Jphi):
     idx = np.clip(idx, 0, len(R_grid) - 1)
     Rg = R_grid[idx]
     Vc = V_c_grid[idx]
-    return Rg, Vc, R_grid, V_c_grid
+    return Rg, Vc
 
 
 def plot_rotation_curve(Rg, Vc):
@@ -102,12 +102,10 @@ def plot_rotation_curve(Rg, Vc):
     plt.title("Galaxy Rotation Curve: Gaia Data")
     plt.legend()
     plt.tight_layout()
-    plt.savefig("rotation_curve.pdf", dpi=150)
-    plt.show()
+    plt.savefig("figures/rotation_curve.pdf", dpi=150)
 
 
-def plot_spiral_panels(residual_list, n_phi, n_R, xedges, yedges, colorbarlim,
-                       theta_phi_bin_centers, Rg_bin_centers):
+def plot_spiral_panels(residual_list, n_phi, n_R, xedges, yedges, colorbarlim):
     fig, axes = plt.subplots(n_phi, n_R, figsize=(n_R, n_phi),
                              sharex=True, sharey=True, constrained_layout=True)
     fig.suptitle(r"Rg vs $\Theta_\phi$ within 1 kpc of the Sun: Gaia Data", fontsize=18)
@@ -132,8 +130,7 @@ def plot_spiral_panels(residual_list, n_phi, n_R, xedges, yedges, colorbarlim,
 
     fig.supxlabel("Guiding Radius (kpc)", fontsize=16)
     fig.supylabel(r"$\Theta_{\phi}$", fontsize=16)
-    plt.savefig("spirals_rg_thetaphi.pdf", dpi=150)
-    plt.show()
+    plt.savefig("figures/spirals_rg_thetaphi.pdf", dpi=150)
 
 
 def plot_amplitude_maps(RG_mesh, Theta_phi_mesh, m0_amp_all, m1_amp_all, m2_amp_all):
@@ -184,8 +181,7 @@ def plot_amplitude_maps(RG_mesh, Theta_phi_mesh, m0_amp_all, m1_amp_all, m2_amp_
             bax.set_ylabel(r"$\Theta_\phi$ [radians]")
 
     fig.colorbar(im, ax=bot_axes, label="Amplitude Ratio")
-    plt.savefig("Gaia_m1_m2_amplitude_ratios.pdf", dpi=300)
-    plt.show()
+    plt.savefig("figures/Gaia_m1_m2_amplitude_ratios.pdf", dpi=300)
 
 
 def main():
@@ -196,11 +192,7 @@ def main():
         default="/Users/Tavangar/Work/packages/Agama/data/PriceWhelan22.ini",
         help="Path to AGAMA potential .ini file",
     )
-    parser.add_argument("--no-show", action="store_true", help="Save figures but do not display them")
     args = parser.parse_args()
-
-    if args.no_show:
-        mpl.use("Agg")
 
     agama.setUnits(mass=1.0, length=1.0, velocity=1.0)
     potential = agama.Potential(args.potential)
@@ -212,23 +204,7 @@ def main():
 
     # --- Guiding radius ---
     print("Computing guiding radii...")
-    Rg, Vc, R_grid, V_c_grid = compute_guiding_radius(potential, d["Jphi"])
-
-    plt.figure()
-    plt.hist(Rg, bins=100, range=[4, 12])
-    plt.xlabel(r"$R_g$ [kpc]")
-    plt.title("Guiding radius distribution")
-    plt.tight_layout()
-    plt.savefig("hist_Rg.pdf", dpi=150)
-    plt.show()
-
-    plt.figure()
-    plt.hist(d["theta_phi"], bins=100, range=[2, 5])
-    plt.xlabel(r"$\theta_\phi$ [rad]")
-    plt.title(r"$\theta_\phi$ distribution")
-    plt.tight_layout()
-    plt.savefig("hist_thetaphi.pdf", dpi=150)
-    plt.show()
+    Rg, Vc = compute_guiding_radius(potential, d["Jphi"])
 
     plot_rotation_curve(Rg, Vc)
 
@@ -249,8 +225,8 @@ def main():
     jy = np.sqrt(Jz) * np.sin(theta_z)
 
     # --- Bin definitions ---
-    Rg_bins = np.arange(5.5, 10.5, 1 / 3)
-    theta_phi_bins = np.arange(2.7, 3.6 + 1e-5, 0.1)
+    Rg_bins = np.arange(5.5, 10.5, 1 / 4)
+    theta_phi_bins = np.arange(2.7, 3.6 + 1e-5, 0.45)
     Rg_bin_centers = 0.5 * (Rg_bins[1:] + Rg_bins[:-1])
     theta_phi_bin_centers = 0.5 * (theta_phi_bins[1:] + theta_phi_bins[:-1])
     Rg_bin_rad = np.diff(Rg_bins)[0] / 2.0
@@ -309,8 +285,7 @@ def main():
             )
             residual_list.append(residual)
 
-    plot_spiral_panels(residual_list, n_phi, n_R, xedges, yedges, colorbarlim,
-                       theta_phi_bin_centers, Rg_bin_centers)
+    plot_spiral_panels(residual_list, n_phi, n_R, xedges, yedges, colorbarlim)
 
     # --- Pass 2: LaguerreSnails decomposition ---
     print("Running LaguerreSnails decomposition (pass 2)...")
@@ -332,7 +307,6 @@ def main():
     recon_m1_all = [[np.zeros((len(jz_grid), len(thetaz_grid))) for _ in range(n_R)] for _ in range(n_phi)]
     recon_m2_all = [[np.zeros((len(jz_grid), len(thetaz_grid))) for _ in range(n_R)] for _ in range(n_phi)]
 
-    lss_last = None
 
     for i, tpc in enumerate(theta_phi_bin_centers):
         print(f"  theta_phi bin {i + 1}/{n_phi}")
@@ -407,69 +381,47 @@ def main():
             recon_m0_all[i][j] = recon_m0
             recon_m1_all[i][j] = recon_m1
             recon_m2_all[i][j] = recon_m2
-            lss_last = lss
 
     # --- Reconstruction plots ---
     recon_m0 = np.array(recon_m0_all, dtype=float)
     recon_m1 = np.array(recon_m1_all, dtype=float)
     recon_m2 = np.array(recon_m2_all, dtype=float)
 
-    if lss_last is not None:
-        xgrid = np.arange(-lss_last.rootjzmax, lss_last.rootjzmax + 1e-5, lss_last.rootjzstep)
-        ygrid = np.arange(-lss_last.rootjzmax, lss_last.rootjzmax + 1e-5, lss_last.rootjzstep)
-
-        fig, axes = plt.subplots(n_phi, n_R, figsize=(n_R * 2, n_phi * 2),
-                                 sharex=True, sharey=True, constrained_layout=True)
-        fig.suptitle("Gaia: Reconstruction m=1 (centered)", fontsize=20)
-        rect = patches.Rectangle((0, 0), 1, 1, transform=fig.transFigure,
-                                  fill=False, edgecolor="black", linewidth=2)
-        fig.add_artist(rect)
-        for i in range(n_phi):
-            for j in range(n_R):
-                axes[i, j].pcolormesh(
-                    xgrid, ygrid, recon_m1[i, j] / recon_m0[i, j],
-                    cmap=cmr.prinsenvlag, shading="auto", rasterized=True,
-                )
-        fig.supxlabel("Guiding Radius (kpc)", fontsize=16)
-        fig.supylabel(r"$\Theta_{\phi}$", fontsize=16)
-        plt.savefig("recon_m1_rg_thetaphi.pdf", dpi=150)
-        plt.show()
-
     # --- Amplitude maps ---
     RG_mesh, Theta_phi_mesh = np.meshgrid(Rg_bins[:-1] + 0.2, theta_phi_bins[:-1] + 0.05)
     plot_amplitude_maps(RG_mesh, Theta_phi_mesh, m0_amp_all, m1_amp_all, m2_amp_all)
 
     # --- Norm maps ---
-    if lss_last is not None:
-        X_grid, Y_grid = np.meshgrid(xgrid, ygrid)
-        good_inds = np.array(np.where(X_grid**2 + Y_grid**2 > 2)).T
-        total_norm = np.zeros((n_phi, n_R))
-        subset_norm = np.zeros((n_phi, n_R))
-        for i in range(n_phi):
-            for j in range(n_R):
-                ratio = recon_m1[i, j] / recon_m0[i, j]
-                total_norm[i, j] = np.linalg.norm(ratio)
-                subset_norm[i, j] = np.linalg.norm(ratio[good_inds[:, 0], good_inds[:, 1]])
+    
+    xgrid = np.arange(-lss.rootjzmax,lss.rootjzmax+1e-5,lss.rootjzstep)
+    ygrid = np.arange(-lss.rootjzmax,lss.rootjzmax+1e-5,lss.rootjzstep)
+    X_grid, Y_grid = np.meshgrid(xgrid, ygrid)
+    good_inds = np.array(np.where(X_grid**2 + Y_grid**2 > 2)).T
+    total_norm = np.zeros((n_phi, n_R))
+    subset_norm = np.zeros((n_phi, n_R))
+    for i in range(n_phi):
+        for j in range(n_R):
+            ratio = recon_m1[i, j] / recon_m0[i, j]
+            total_norm[i, j] = np.linalg.norm(ratio)
+            subset_norm[i, j] = np.linalg.norm(ratio[good_inds[:, 0], good_inds[:, 1]])
 
-        fig, ax = plt.subplots(1, 1, figsize=(4, 4), constrained_layout=True)
-        im = ax.pcolormesh(RG_mesh, Theta_phi_mesh, total_norm,
-                           cmap=cmr.chroma, norm=mpl.colors.LogNorm())
-        ax.set_title("Norm of m=1 Reconstruction Ratio")
-        fig.colorbar(im, label="Amplitude")
-        ax.set_xlabel(r"Guiding Radius $R_g$ [kpc]")
-        ax.set_ylabel(r"$\Theta_\phi$ [radians]")
-        plt.savefig("norm_m1_total_rg_thetaphi.pdf", dpi=150)
-        plt.show()
+    fig, ax = plt.subplots(1, 1, figsize=(4, 4), constrained_layout=True)
+    im = ax.pcolormesh(RG_mesh, Theta_phi_mesh, total_norm,
+                        cmap=cmr.chroma, norm=mpl.colors.LogNorm())
+    ax.set_title("Norm of m=1 Reconstruction Ratio")
+    fig.colorbar(im, label="Amplitude")
+    ax.set_xlabel(r"Guiding Radius $R_g$ [kpc]")
+    ax.set_ylabel(r"$\Theta_\phi$ [radians]")
+    plt.savefig("figures/norm_m1_total_rg_thetaphi.pdf", dpi=150)
 
-        fig, ax = plt.subplots(1, 1, figsize=(4, 4), constrained_layout=True)
-        im = ax.pcolormesh(RG_mesh, Theta_phi_mesh, subset_norm,
-                           cmap=cmr.chroma, norm=mpl.colors.LogNorm())
-        ax.set_title("Norm of m=1 Reconstruction Ratio (excl. central area)")
-        fig.colorbar(im, label="Amplitude")
-        ax.set_xlabel(r"Guiding Radius $R_g$ [kpc]")
-        ax.set_ylabel(r"$\Theta_\phi$ [radians]")
-        plt.savefig("norm_m1_subset_rg_thetaphi.pdf", dpi=150)
-        plt.show()
+    fig, ax = plt.subplots(1, 1, figsize=(4, 4), constrained_layout=True)
+    im = ax.pcolormesh(RG_mesh, Theta_phi_mesh, subset_norm,
+                        cmap=cmr.chroma, norm=mpl.colors.LogNorm())
+    ax.set_title("Norm of m=1 Reconstruction Ratio (excl. central area)")
+    fig.colorbar(im, label="Amplitude")
+    ax.set_xlabel(r"Guiding Radius $R_g$ [kpc]")
+    ax.set_ylabel(r"$\Theta_\phi$ [radians]")
+    plt.savefig("figures/norm_m1_subset_rg_thetaphi.pdf", dpi=150)
 
     print("All done.")
 
